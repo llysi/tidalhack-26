@@ -1,0 +1,44 @@
+[
+  {
+    "id": "1",
+    "name": "Downtown Community Food Pantry",
+    "type": "pantry",
+    "address": "123 Main St, San Francisco, CA 94102",
+    "lat": 37.7849,
+    "lng": -122.4094,
+    "hours": "Mon-Fri 9am-5pm",
+    "phone": "(415) 555-0101",
+    "inventory_tags": ["canned goods", "fresh produce", "dairy", "bread"],
+    "accepts_snap": false,
+    "budget_friendly": true,
+    "notes": "No appointment needed. Bring a reusable bag."
+  },
+  {
+    "id": "2",
+    "name": "Sunset Affordable Groceries",
+    "type": "grocery",
+    "address": "456 Irving St, San Francisco, CA 94122",
+    "lat": 37.7637,
+    "lng": -122.4629,
+    "hours": "Daily 8am-9pm",
+    "phone": "(415) 555-0202",
+    "inventory_tags": ["fresh produce", "meat", "dairy", "snacks", "beverages"],
+    "accepts_snap": true,
+    "budget_friendly": true,
+    "notes": "Accepts SNAP/EBT. Weekly discount on produce every Wednesday."
+  },
+  {
+    "id": "3",
+    "name": "Mission Meals Program",
+    "type": "meal_program",
+    "address": "789 Valencia St, San Francisco, CA 94110",
+    "lat": 37.7599,
+    "lng": -122.4214,
+    "hours": "Mon-Sat 11:30am-1pm, 5pm-7pm",
+    "phone": "(415) 555-0303",
+    "inventory_tags": ["hot meals", "vegetarian options", "halal"],
+    "accepts_snap": false,
+    "budget_friendly": true,
+    "notes": "Free hot meals served daily. Vegetarian and halal options available."
+  }
+]
