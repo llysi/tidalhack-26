@@ -31,11 +31,30 @@ async function findNearestStore(
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const postalCode = searchParams.get("zip");
-  if (!postalCode) return Response.json({ coupons: [], errors: ["zip parameter is required"] });
+  let postalCode = searchParams.get("zip");
   const query = searchParams.get("q") ?? "";
   const lat = parseFloat(searchParams.get("lat") ?? "");
   const lng = parseFloat(searchParams.get("lng") ?? "");
+
+  // If no postal code provided, try to reverse geocode from coordinates
+  if (!postalCode && !isNaN(lat) && !isNaN(lng)) {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
+        { headers: { "User-Agent": "ADI-I/1.0" } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.address?.postcode) {
+          postalCode = data.address.postcode;
+        }
+      }
+    } catch {
+      /* skip reverse geocoding errors */
+    }
+  }
+
+  if (!postalCode) return Response.json({ coupons: [], errors: ["No postal code available for location"] });
 
   try {
     let coupons = await fetchFlippCoupons(postalCode, query);
