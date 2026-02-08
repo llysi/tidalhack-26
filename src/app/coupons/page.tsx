@@ -24,7 +24,8 @@ export default function CouponsPage() {
       })
       .catch((err) => setErrors([String(err)]))
       .finally(() => setLoading(false));
-  }, [location?.zip]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location ? `${location.lat},${location.lng},${location.zip}` : null]);
 
   // Build dynamic store list from whatever came back
   const stores = useMemo(() => {

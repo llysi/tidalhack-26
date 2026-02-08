@@ -31,7 +31,8 @@ async function findNearestStore(
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const postalCode = searchParams.get("zip") ?? "77001"; // default: Houston
+  const postalCode = searchParams.get("zip");
+  if (!postalCode) return Response.json({ coupons: [], errors: ["zip parameter is required"] });
   const query = searchParams.get("q") ?? "";
   const lat = parseFloat(searchParams.get("lat") ?? "");
   const lng = parseFloat(searchParams.get("lng") ?? "");
