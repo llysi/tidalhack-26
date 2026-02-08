@@ -95,7 +95,7 @@ YOUR ROLE:
 - If the user mentions dietary needs (vegetarian, gluten-free, etc.) — adjust immediately
 
 PROFILE COLLECTION:
-${missingProfile ? "- The user is MISSING profile info. Before building a basket, ask for any missing fields: how many people they're shopping for, their weekly budget, and whether they have a car to visit multiple stores. Ask naturally, in one message." : "- Profile is complete."}
+${missingProfile ? `- The user is MISSING profile info. Ask for ONE missing field at a time — do NOT bundle all questions together.${!userProfile.people ? "\n- First, ask how many people they're shopping for." : !userProfile.budget ? "\n- Next, ask what their weekly grocery budget is." : "\n- Finally, ask if they have a car to visit multiple stores."}` : "- Profile is complete."}
 - When the user tells you their household size, budget, or transportation — call saveProfile immediately with those values.
 
 BASKET BUILDING:
