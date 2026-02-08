@@ -10,6 +10,7 @@ export default function CouponsPage() {
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeStore, setActiveStore] = useState<string>("");
+  const [search, setSearch] = useState("");
 
   // Auto-search when location changes (set from navbar)
   useEffect(() => {
@@ -43,7 +44,18 @@ export default function CouponsPage() {
     }
   }, [stores, activeStore]);
 
-  const filtered = coupons.filter((c) => c.store === activeStore);
+  const filtered = useMemo(() => {
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      return coupons.filter(
+        (c) =>
+          c.item.toLowerCase().includes(q) ||
+          c.store.toLowerCase().includes(q) ||
+          c.dealText?.toLowerCase().includes(q)
+      );
+    }
+    return coupons.filter((c) => c.store === activeStore);
+  }, [coupons, activeStore, search]);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -56,8 +68,19 @@ export default function CouponsPage() {
         <p className="text-sm text-zinc-400 mb-4">Set your location in the nav bar to see local deals</p>
       )}
 
+      {/* Search */}
+      {coupons.length > 0 && (
+        <input
+          type="search"
+          placeholder="Search all deals…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full mb-4 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      )}
+
       {/* Store tabs */}
-      {stores.length > 0 && (
+      {!search && stores.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
           {stores.map(({ id, count }) => (
             <button
@@ -90,7 +113,9 @@ export default function CouponsPage() {
       )}
 
       {!loading && location && coupons.length > 0 && filtered.length === 0 && (
-        <p className="text-zinc-400 text-sm">No deals found for this store.</p>
+        <p className="text-zinc-400 text-sm">
+          {search ? `No deals matching "${search}".` : "No deals found for this store."}
+        </p>
       )}
 
       {/* Coupon list */}
