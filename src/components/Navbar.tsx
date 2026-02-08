@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { useLocation, geocodeAddress, RADIUS_OPTIONS } from "@/contexts/LocationContext";
+import { useLocation, geocodeAddress } from "@/contexts/LocationContext";
 
-// Removed the Home tab from the links array
 const links = [
   { href: "/coupons", label: "Coupons" },
   { href: "/pantries", label: "Pantries" },
@@ -18,7 +17,7 @@ interface Suggestion {
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { location, setLocation, radius, setRadius } = useLocation();
+  const { location, setLocation } = useLocation();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [geocoding, setGeocoding] = useState(false);
@@ -99,8 +98,8 @@ export default function Navbar() {
     : null;
 
   return (
-    <nav className="sticky top-0 z-[100] w-full px-6 py-6 flex items-center gap-8 bg-transparent transition-all">
-      {/* Brand Logo - Navigates Home even though tab is gone */}
+    <nav className="sticky top-0 z-[100] w-full px-6 py-3 flex items-center gap-8 bg-background transition-all">
+      {/* Brand Logo */}
       <Link href="/" className="text-2xl font-black tracking-tighter text-black hover:text-accent transition-colors">
         ADI-I
       </Link>
@@ -122,18 +121,6 @@ export default function Navbar() {
       </div>
 
       <div className="ml-auto flex items-center gap-6">
-        <div className="flex items-center">
-          <select
-            value={radius}
-            onChange={(e) => setRadius(Number(e.target.value) as typeof RADIUS_OPTIONS[number])}
-            className="text-[10px] font-black uppercase tracking-widest text-black bg-transparent border-none focus:outline-none cursor-pointer hover:text-accent transition-colors appearance-none"
-          >
-            {RADIUS_OPTIONS.map((r) => (
-              <option key={r} value={r} className="text-black bg-white">{r} MILE RADIUS</option>
-            ))}
-          </select>
-        </div>
-
         <div className="relative flex items-center">
           {editing ? (
             <div className="relative">
