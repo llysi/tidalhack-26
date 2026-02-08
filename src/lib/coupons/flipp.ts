@@ -23,18 +23,93 @@ const HEADERS = {
   Referer: "https://flipp.com/",
 };
 
-// Keywords that indicate non-food items to filter out
+// Blocklist: items matching any of these are never food
 const NON_FOOD_KEYWORDS = [
-  "candle", "wax melt", "detergent", "laundry", "bleach", "trash bag",
-  "paper towel", "toilet paper", "tissue", "shampoo", "conditioner",
-  "toothbrush", "toothpaste", "deodorant", "razor", "vitamin", "supplement",
-  "medicine", "battery", "electronics", "shirt", "pant", "shoe", "toy",
-  "book", "magazine", "greeting card", "gift card", "flower pot",
-  "lawn", "hardware", "disinfect", "sponge",
+  // Cleaning / laundry
+  "detergent", "laundry", "bleach", "fabric softener", "dryer sheet",
+  "stain remover", "dish soap", "dishwasher", "dish wash", "disinfect",
+  "lysol", "clorox", "febreze", "air freshener", "sponge", "scrub pad",
+  "mop", "broom", "vacuum",
+  // Paper / plastic household
+  "paper towel", "toilet paper", "tissue", "napkin", "paper plate",
+  "paper cup", "trash bag", "garbage bag", "aluminum foil", "plastic wrap",
+  "parchment paper", "ziploc", "zip lock",
+  // Personal care
+  "shampoo", "conditioner", "body wash", "hand soap", "bar soap",
+  "lotion", "moisturizer", "sunscreen", "deodorant", "antiperspirant",
+  "razor", "shaving", "toothbrush", "toothpaste", "mouthwash", "dental floss",
+  "floss pick", "hair dye", "hair color", "hair gel", "hair spray",
+  "nail polish", "makeup", "lipstick", "mascara", "foundation", "concealer",
+  "perfume", "cologne",
+  // Baby (non-food)
+  "diaper", "baby wipe", "baby lotion", "baby shampoo",
+  // Pet (non-food)
+  "cat litter", "dog food", "cat food", "pet food", "dog treat", "cat treat",
+  "bird seed", "fish food",
+  // Medicine / health
+  "vitamin", "supplement", "medicine", "bandage", "pain relief", "ibuprofen",
+  "acetaminophen", "cold medicine", "cough syrup", "allergy relief",
+  "thermometer", "first aid",
+  // Other household / non-food
+  "candle", "wax melt", "trash bag", "battery", "electronics",
+  "shirt", "pant", "shoe", "sock", "underwear", "clothing",
+  "toy", "book", "magazine", "greeting card", "gift card",
+  "flower pot", "lawn", "garden", "fertilizer", "hardware",
+  "lightbulb", "light bulb", "extension cord", "storage bin",
+];
+
+// Allowlist: if a name matches any food keyword, it's definitely food
+// (overrides false positives from the blocklist)
+const FOOD_KEYWORDS = [
+  // Produce
+  "apple", "banana", "orange", "grape", "berry", "strawberry", "blueberry",
+  "raspberry", "blackberry", "cranberry", "tomato", "potato", "onion",
+  "garlic", "pepper", "broccoli", "spinach", "lettuce", "carrot", "celery",
+  "corn", "mushroom", "squash", "zucchini", "cucumber", "avocado", "lime",
+  "lemon", "peach", "plum", "pear", "melon", "watermelon", "cantaloupe",
+  "cherry", "mango", "pineapple", "kiwi", "grapefruit", "asparagus",
+  "cauliflower", "cabbage", "kale", "arugula", "chard", "eggplant", "beet",
+  "radish", "turnip", "sweet potato", "yam", "leek", "artichoke",
+  // Meat / seafood
+  "chicken", "beef", "pork", "turkey", "lamb", "veal", "bison", "venison",
+  "fish", "salmon", "tuna", "tilapia", "cod", "shrimp", "crab", "lobster",
+  "steak", "roast", "ground beef", "ground turkey", "sausage", "bacon",
+  "ham", "hot dog", "bratwurst", "deli meat", "rotisserie", "wing", "drumstick",
+  "rib", "chop", "tenderloin", "filet", "loin",
+  // Dairy / eggs
+  "milk", "cheese", "yogurt", "butter", "cream", "egg", "sour cream",
+  "cottage cheese", "cream cheese", "whipped cream", "half and half",
+  // Bakery / bread
+  "bread", "roll", "bun", "muffin", "cake", "cookie", "donut", "bagel",
+  "tortilla", "croissant", "biscuit", "pastry", "pie", "waffle", "pancake",
+  // Frozen
+  "ice cream", "frozen pizza", "frozen meal", "frozen vegetable", "frozen fruit",
+  "popsicle", "gelato", "sorbet",
+  // Pantry staples
+  "rice", "pasta", "noodle", "soup", "sauce", "oil", "vinegar", "spice",
+  "seasoning", "flour", "sugar", "salt", "cereal", "oatmeal", "granola",
+  "cracker", "chip", "snack", "popcorn", "pretzel", "nut", "peanut",
+  "almond", "walnut", "cashew", "pecan", "pistachio", "bean", "lentil",
+  "chickpea", "canned", "condiment", "ketchup", "mustard", "mayo",
+  "salad dressing", "syrup", "honey", "jam", "jelly", "peanut butter",
+  "almond butter", "hummus", "salsa", "guacamole", "dip",
+  // Beverages
+  "coffee", "tea", "juice", "soda", "water", "drink", "beverage",
+  "sports drink", "energy drink", "milk alternative", "almond milk",
+  "oat milk", "soy milk",
+  // Deli / prepared
+  "deli", "sandwich", "wrap", "prepared meal", "rotisserie",
+  // Seafood / canned
+  "tuna", "sardine", "anchovy", "clam", "oyster",
+  // Snacks / sweets
+  "chocolate", "candy", "gummy", "licorice", "marshmallow", "caramel",
+  "trail mix", "dried fruit", "raisin",
 ];
 
 function isFoodItem(name: string): boolean {
   const lower = name.toLowerCase();
+  // Allowlist overrides blocklist
+  if (FOOD_KEYWORDS.some((kw) => lower.includes(kw))) return true;
   return !NON_FOOD_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
