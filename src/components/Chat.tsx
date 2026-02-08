@@ -4,10 +4,6 @@ import { useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 
-// TODO: Style this component to match your design.
-// TODO: Handle the route_to_results tool call on the client side
-//       to navigate to /results when the intake phase is done.
-
 interface ChatProps {
   phase: "intake" | "results";
 }
@@ -20,19 +16,11 @@ export default function Chat({ phase }: ChatProps) {
       api: "/api/chat",
       body: { phase },
     }),
-    // TODO: If you need to intercept tool calls (e.g. route_to_results),
-    // use the onToolCall callback:
-    // onToolCall: async ({ toolCall }) => {
-    //   if (toolCall.toolName === "route_to_results") {
-    //     // Navigate to /results with the summary
-    //     // router.push(`/results?summary=${encodeURIComponent(toolCall.args.summary)}`);
-    //   }
-    // },
   });
 
   const isLoading = status === "submitted" || status === "streaming";
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
     sendMessage({ text: input });

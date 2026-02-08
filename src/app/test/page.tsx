@@ -9,6 +9,7 @@ interface PlaceResult {
   lng: number;
   phone?: string;
   hours?: string[];
+  photoName?: string;
 }
 
 interface SnapResult {
@@ -16,6 +17,7 @@ interface SnapResult {
   address: string;
   lat: number;
   lng: number;
+  photoName?: string;
 }
 
 interface TestData {
@@ -147,6 +149,13 @@ export default function TestPage() {
                       className="border-b border-zinc-100 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200"
                     >
                       <td className="py-2 pr-4 font-medium">
+                        {p.photoName && (
+                          <img
+                            src={`/api/photo?name=${encodeURIComponent(p.photoName)}`}
+                            alt={p.name}
+                            className="w-16 h-16 object-cover rounded mb-1"
+                          />
+                        )}
                         <a
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.name} ${p.address}`)}`}
                           target="_blank"
@@ -198,6 +207,13 @@ export default function TestPage() {
                       className="border-b border-zinc-100 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200"
                     >
                       <td className="py-2 pr-4 font-medium">
+                        {s.photoName && (
+                          <img
+                            src={`/api/photo?name=${encodeURIComponent(s.photoName)}`}
+                            alt={s.name}
+                            className="w-16 h-16 object-cover rounded mb-1"
+                          />
+                        )}
                         <a
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${s.name} ${s.address}`)}`}
                           target="_blank"

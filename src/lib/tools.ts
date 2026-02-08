@@ -1,10 +1,9 @@
 import { z } from "zod/v4";
 import type { ToolSet } from "ai";
-import { searchPantries, getPantryById } from "@/data/pantries";
+import { searchFoodResources } from "./search";
 
 /**
  * Tools the LLM can call during conversation.
- * Used in the intake phase and results phase respectively.
  */
 
 // --- Intake phase tool ---
@@ -21,8 +20,6 @@ export const intakeTools: ToolSet = {
         ),
     }),
     execute: async ({ summary }: { summary: string }) => {
-      // This tool's result is handled client-side to trigger navigation.
-      // The summary is passed along so the results page knows the user's needs.
       return { action: "route_to_results", summary };
     },
   },
@@ -31,52 +28,29 @@ export const intakeTools: ToolSet = {
 // --- Results phase tools ---
 
 export const resultsTools: ToolSet = {
-  search_pantries: {
+  search_food_resources: {
     description:
-      "Search for food pantries, grocery stores, or meal programs. Filter by type, tags, SNAP acceptance, and budget-friendliness.",
+      "Search for food pantries, grocery stores, meal programs, and SNAP/EBT retailers near a location. Returns results from Google Places and the USDA SNAP database.",
     inputSchema: z.object({
-      type: z
-        .enum(["pantry", "grocery", "meal_program"])
-        .optional()
-        .describe("Filter by resource type"),
-      tags: z
-        .array(z.string())
-        .optional()
+      query: z
+        .string()
         .describe(
-          "Filter by inventory tags (e.g. 'fresh produce', 'halal', 'vegetarian options')"
+          "What to search for, e.g. 'food pantry', 'soup kitchen', 'halal grocery store'"
         ),
-      accepts_snap: z
-        .boolean()
-        .optional()
-        .describe("Filter for places that accept SNAP/EBT"),
-      budget_friendly: z
-        .boolean()
-        .optional()
-        .describe("Filter for budget-friendly options"),
+      lat: z.number().describe("Latitude of the search center"),
+      lng: z.number().describe("Longitude of the search center"),
     }),
-    execute: async (filters: {
-      type?: string;
-      tags?: string[];
-      accepts_snap?: boolean;
-      budget_friendly?: boolean;
+    execute: async ({
+      query,
+      lat,
+      lng,
+    }: {
+      query: string;
+      lat: number;
+      lng: number;
     }) => {
-      const results = searchPantries(filters);
-      return { results };
-    },
-  },
-
-  get_pantry_info: {
-    description:
-      "Get full details about a specific food resource by its ID.",
-    inputSchema: z.object({
-      id: z.string().describe("The pantry/resource ID"),
-    }),
-    execute: async ({ id }: { id: string }) => {
-      const pantry = getPantryById(id);
-      if (!pantry) {
-        return { error: "Resource not found" };
-      }
-      return { pantry };
+      const results = await searchFoodResources(query, lat, lng);
+      return results;
     },
   },
 };
