@@ -6,11 +6,14 @@ import type { SnapRetailer } from "@/lib/usda-snap";
 import { useLocation } from "@/contexts/LocationContext";
 import CouponStoreMap from "@/components/CouponStoreMap";
 import CouponChat from "@/components/CouponChat";
+import BasketPanel from "@/components/BasketPanel";
+import { useBasket } from "@/contexts/BasketContext";
 
 const couponCache = new Map<string, Coupon[]>();
 
 export default function CouponsPage() {
   const { location } = useLocation();
+  const { addItem } = useBasket();
   const cacheKey = location ? `${location.zip},${location.lat},${location.lng}` : null;
   const [coupons, setCoupons] = useState<Coupon[]>(() => (cacheKey ? couponCache.get(cacheKey) ?? [] : []));
   const [errors, setErrors] = useState<string[]>([]);
@@ -57,7 +60,6 @@ export default function CouponsPage() {
       .catch(() => {});
   }, [location?.lat, location?.lng]);
 
-  // UPDATED: Tracking hasSnap status for each merchant
   const stores = useMemo(() => {
     const seen = new Map<string, { count: number; hasSnap: boolean }>();
     for (const c of coupons) {
@@ -138,15 +140,15 @@ export default function CouponsPage() {
           className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
             snapOnly 
               ? "bg-accent border-accent text-foreground shadow-lg" 
-              : "bg-accent border-zinc-200 text-zinc-400 hover:border-accent"
+              : "bg-white border-zinc-200 text-zinc-400 hover:border-accent"
           }`}
         >
           {snapOnly ? "✓ SNAP Eligible Only" : "Filter SNAP Eligible"}
         </button>
       </header>
 
-      <div className="flex flex-col lg:flex-row gap-10 items-start">
-        {/* Left: Interactive Map Sidebar */}
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
+        {/* Left: Map Sidebar - Made narrower (30%) to allow grid to breathe */}
         <aside className="w-full lg:w-[40%] lg:sticky lg:top-8 order-2 lg:order-1">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-xl font-black text-foreground uppercase tracking-tight">
@@ -174,7 +176,7 @@ export default function CouponsPage() {
           </div>
         </aside>
 
-        {/* Right: Search & Coupon Feed */}
+        {/* Right: Search & Grid Coupon Feed - Made wider (70%) */}
         <main className="w-full lg:w-[60%] order-1 lg:order-2">
           <div className="sticky top-0 bg-background/95 backdrop-blur-md z-20 pb-6">
             <input
@@ -186,7 +188,6 @@ export default function CouponsPage() {
             />
           </div>
           
-          {/* UPDATED: Store Tabs with Grayscale logic */}
           {!search && (
             <div className="flex flex-wrap gap-2 mb-8">
               {stores.map(({ id, count, hasSnap }) => {
@@ -210,59 +211,77 @@ export default function CouponsPage() {
             </div>
           )}
 
-          {/* Result Feed */}
-          <div className="space-y-4">
+          {/* GRID: 3 columns on desktop, 2 on tablet, 1 on mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map((coupon, i) => (
               <div 
                 key={i} 
                 onClick={() => handleFocusStore(coupon.store)}
-                className="group p-5 bg-white border border-zinc-100 rounded-[1.5rem] hover:border-accent/30 hover:shadow-xl transition-all duration-300 cursor-pointer active:scale-[0.98]"
+                className="group flex flex-col p-4 bg-white border border-zinc-100 rounded-[1.5rem] hover:border-accent/30 hover:shadow-xl transition-all duration-300 cursor-pointer active:scale-[0.98]"
               >
-                <div className="flex gap-5">
-                  <div className="w-24 h-24 bg-zinc-50 rounded-2xl flex-shrink-0 flex items-center justify-center p-3 border border-zinc-50 group-hover:bg-white transition-colors">
-                    {coupon.imageUrl ? (
-                      <img src={coupon.imageUrl} alt="" className="max-w-full max-h-full object-contain" />
-                    ) : (
-                      <span className="text-3xl grayscale opacity-20">🛒</span>
+                {/* Top Section: Image and Price */}
+                <div className="relative w-full aspect-square bg-zinc-50 rounded-2xl mb-4 flex items-center justify-center p-4 border border-zinc-50 group-hover:bg-white transition-colors overflow-hidden">
+                  {coupon.imageUrl ? (
+                    <img src={coupon.imageUrl} alt="" className="max-w-full max-h-full object-contain" />
+                  ) : (
+                    <span className="text-4xl grayscale opacity-20">🛒</span>
+                  )}
+                  
+                  {/* Price Badge Overlay */}
+                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-xl shadow-sm border border-zinc-100">
+                    <p className="font-black text-accent text-base leading-none">
+                      ${coupon.couponPrice?.toFixed(2)}
+                    </p>
+                    {coupon.regularPrice && (
+                      <p className="text-[9px] text-zinc-400 line-through text-right">
+                        ${coupon.regularPrice.toFixed(2)}
+                      </p>
                     )}
                   </div>
-                  <div className="flex-1 py-1">
-                    <div className="flex justify-between items-start gap-4">
-                      <h3 className="font-bold text-base leading-tight text-foreground group-hover:text-accent transition-colors">
-                        {coupon.item}
-                      </h3>
-                      <div className="text-right">
-                        <p className="font-black text-accent text-xl leading-none">
-                          ${coupon.couponPrice?.toFixed(2)}
-                        </p>
-                        {coupon.regularPrice && (
-                          <p className="text-[10px] text-zinc-400 line-through mt-1">
-                            ${coupon.regularPrice.toFixed(2)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between mt-4">
-                       <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">{coupon.storeName}</p>
-                       <div className="flex gap-2">
-                         {coupon.snapEligible && (
-                          <span className="bg-accent/10 text-accent text-[8px] font-black px-2 py-1 rounded-md border border-accent/20">
-                            SNAP
-                          </span>
-                        )}
-                        <span className="text-[9px] font-black uppercase text-zinc-300 group-hover:text-accent transition-colors">
-                           Map →
+                </div>
+
+                {/* Bottom Section: Details */}
+                <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-sm leading-tight text-foreground group-hover:text-accent transition-colors line-clamp-2 mb-2">
+                      {coupon.item}
+                    </h3>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2 border-t border-zinc-50">
+                    <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest truncate max-w-[50%]">
+                      {coupon.storeName}
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      {coupon.snapEligible && (
+                        <span className="bg-accent/10 text-accent text-[8px] font-black px-2 py-0.5 rounded-md border border-accent/20">
+                          SNAP
                         </span>
-                       </div>
+                      )}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); addItem(coupon); }}
+                        className="text-[11px] font-black w-6 h-6 rounded-full flex items-center justify-center transition hover:scale-110 active:scale-95"
+                        style={{ background: "var(--accent)", color: "var(--accent-fg)" }}
+                        title="Add to basket"
+                      >
+                        +
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+          
+          {filtered.length === 0 && (
+            <div className="text-center py-20 border-2 border-dashed border-zinc-200 rounded-[2rem]">
+              <p className="text-zinc-400 font-medium italic">No deals found for this selection.</p>
+            </div>
+          )}
         </main>
       </div>
 
+      <BasketPanel />
       {coupons.length > 0 && <CouponChat coupons={coupons} />}
     </div>
   );

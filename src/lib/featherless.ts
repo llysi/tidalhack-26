@@ -9,6 +9,6 @@ export const featherless = createOpenAICompatible({
 });
 
 // Change this to switch models. Use any model ID from https://featherless.ai/models
-export const MODEL_ID = "Qwen/Qwen2.5-72B-Instruct";
+export const MODEL_ID = "meta-llama/Meta-Llama-3.1-70B-Instruct";
 
 export const defaultModel = featherless(MODEL_ID);

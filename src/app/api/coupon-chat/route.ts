@@ -1,64 +1,143 @@
 import { streamText } from "ai";
+import { z } from "zod/v4";
 import { defaultModel } from "@/lib/featherless";
 import type { Coupon } from "@/lib/coupons/types";
 
+interface UserProfile {
+  people?: string | null;
+  budget?: string | null;
+  car?: string | null;
+}
+
 const NUTRITION_PROFILES: Record<string, string> = {
-  produce: "vitamins, fiber, antioxidants",
-  herbs: "flavor, anti-inflammatory compounds",
-  meat: "protein, iron, zinc, B12",
-  seafood: "protein, omega-3 fatty acids, iodine",
-  dairy: "calcium, protein, vitamin D",
-  bakery: "carbohydrates, quick energy",
-  frozen: "convenient, retains most nutrients",
-  grains: "complex carbs, B vitamins, fiber",
-  baking: "energy source, used for home cooking",
-  pantry: "shelf-stable staples for balanced meals",
+  produce: "vitamins, fiber, antioxidants — essential for immunity and digestion",
+  herbs: "flavor enhancement, anti-inflammatory compounds",
+  meat: "complete protein, iron, zinc, B12 — muscle and energy",
+  seafood: "lean protein, omega-3 fatty acids, iodine — heart and brain health",
+  dairy: "calcium, protein, vitamin D — bones and satiety",
+  bakery: "carbohydrates, quick energy — staple for meals",
+  frozen: "convenient, retains most nutrients when flash-frozen",
+  grains: "complex carbs, B vitamins, fiber — sustained energy",
+  baking: "base ingredients for home-cooked meals",
+  pantry: "shelf-stable staples — the backbone of any kitchen",
   beverages: "hydration",
-  prepared: "ready-to-eat convenience",
-  snacks: "quick energy, treats",
-  specialty: "diverse cultural ingredients",
+  snacks: "quick energy, treats in moderation",
+  specialty: "diverse cultural ingredients for varied cuisine",
 };
 
 export async function POST(req: Request) {
   try {
-    const { messages, coupons } = await req.json();
-    const list = (coupons as Coupon[]).slice(0, 120); // cap tokens
+    const { messages, coupons, basket, profile } = await req.json();
+    const list = (coupons as Coupon[]).slice(0, 150);
+    const basketItems = (basket as Coupon[] | undefined) ?? [];
+    const userProfile = (profile as UserProfile | undefined) ?? {};
 
-    // Build a compact coupon list grouped by category
+    // Build coupon list grouped by category
     const byCat = new Map<string, string[]>();
     for (const c of list) {
       const cat = c.category ?? "other";
       if (!byCat.has(cat)) byCat.set(cat, []);
       const price = c.couponPrice != null ? ` $${c.couponPrice.toFixed(2)}` : "";
-      byCat.get(cat)!.push(`${c.item}${price} (${c.store})`);
+      const snap = c.snapEligible ? " [SNAP]" : "";
+      byCat.get(cat)!.push(`${c.item}${price}${snap} @ ${c.store}`);
     }
 
     const couponContext = Array.from(byCat.entries())
-      .map(([cat, items]) => `**${cat}**: ${items.join(", ")}`)
-      .join("\n");
+      .map(([cat, items]) => `[${cat.toUpperCase()}]\n${items.map(i => `  • ${i}`).join("\n")}`)
+      .join("\n\n");
 
     const nutritionGuide = Object.entries(NUTRITION_PROFILES)
-      .map(([cat, desc]) => `${cat}=${desc}`)
-      .join("; ");
+      .map(([cat, desc]) => `  • ${cat}: ${desc}`)
+      .join("\n");
 
-    const systemPrompt = `You are a friendly grocery shopping assistant helping users build a balanced, budget-friendly basket from current local deals.
+    // User profile section
+    const profileLines: string[] = [];
+    if (userProfile.people) profileLines.push(`- Shopping for: ${userProfile.people} people`);
+    if (userProfile.budget) profileLines.push(`- Weekly budget: ${userProfile.budget}`);
+    if (userProfile.car) profileLines.push(`- Has car for shopping: ${userProfile.car}`);
+    const profileContext = profileLines.length > 0
+      ? `USER PROFILE:\n${profileLines.join("\n")}`
+      : "USER PROFILE:\n- No profile set yet";
 
-Available deals by category:
+    const missingProfile = !userProfile.people || !userProfile.budget || !userProfile.car;
+
+    // Basket section
+    const basketTotal = basketItems.reduce((s: number, c: Coupon) => s + (c.couponPrice ?? 0), 0);
+    const basketContext = basketItems.length > 0
+      ? `CURRENT BASKET (${basketItems.length} items, ~$${basketTotal.toFixed(2)}):\n${basketItems.map((c: Coupon) => `  • ${c.item} $${(c.couponPrice ?? 0).toFixed(2)} [${c.category ?? "?"}]`).join("\n")}`
+      : "CURRENT BASKET:\n  (empty — user hasn't added anything yet)";
+
+    const systemPrompt = `You are ADI-I, a warm and knowledgeable grocery shopping assistant. You help users build balanced, budget-friendly grocery baskets from their local weekly deals.
+
+═══════════════════════════════
+${profileContext}
+
+${basketContext}
+═══════════════════════════════
+
+AVAILABLE DEALS THIS WEEK:
 ${couponContext}
 
-Nutrition guide: ${nutritionGuide}
+═══════════════════════════════
+NUTRITION GUIDE:
+${nutritionGuide}
+═══════════════════════════════
 
-When recommending a basket:
-- Aim for variety across categories (produce, protein, dairy, grains)
-- Prefer items with listed sale prices for budget impact
-- Suggest 5-8 items with a rough total cost estimate
-- Be warm, concise, and practical
-- If the user mentions dietary restrictions, adjust accordingly`;
+YOUR ROLE:
+- You see the user's basket and available deals in real time
+- Suggest items that complement what's already in their basket
+- Build balanced meals: protein + produce + grains + dairy
+- Prioritize SNAP-eligible items [SNAP] when relevant
+- Be warm, practical, and concise. No fluff.
+- If the user mentions dietary needs (vegetarian, gluten-free, etc.) — adjust immediately
+
+PROFILE COLLECTION:
+${missingProfile ? "- The user is MISSING profile info. Before building a basket, ask for any missing fields: how many people they're shopping for, their weekly budget, and whether they have a car to visit multiple stores. Ask naturally, in one message." : "- Profile is complete."}
+- When the user tells you their household size, budget, or transportation — call saveProfile immediately with those values.
+
+BASKET BUILDING:
+- When the user asks you to build, suggest, or auto-fill a basket — call suggestBasket with 5-10 items.
+- Pick items that cover protein + produce + grains + dairy when possible.
+- Stay within their budget. Use ONLY coupon prices from the deals list for math.
+- Each item must use the EXACT name and store from the deals list above.
+- Include a brief reason for each item.
+
+BUDGET MATH RULES (follow strictly):
+- ONLY use the coupon sale prices shown above for ALL calculations
+- NEVER estimate or guess any price — only reference exact prices from the deals list
+- When discussing basket total, always show an itemized breakdown:
+    Basket so far:
+    • Item $X.XX
+    ─────────────────
+    Subtotal: $X.XX
+    Remaining: $X.XX of $X budget`;
 
     const result = streamText({
       model: defaultModel,
       system: systemPrompt,
       messages,
+      tools: {
+        saveProfile: {
+          description: "Save the user's profile: household size, weekly budget, and whether they have a car",
+          inputSchema: z.object({
+            people: z.string().optional().describe("Number of people in household, e.g. '2'"),
+            budget: z.string().optional().describe("Weekly grocery budget, e.g. '$80'"),
+            car: z.string().optional().describe("Whether they have a car: 'yes' or 'no'"),
+          }),
+        },
+        suggestBasket: {
+          description: "Present a curated basket of grocery items for the user to add",
+          inputSchema: z.object({
+            items: z.array(z.object({
+              item: z.string().describe("Exact item name from the deals list"),
+              store: z.string().describe("Exact store name from the deals list"),
+              price: z.number().describe("Coupon price in dollars"),
+              reason: z.string().describe("Brief reason for including this item (1 sentence)"),
+            })).describe("5-10 suggested items"),
+            summary: z.string().describe("1-2 sentence overview of the suggested basket"),
+          }),
+        },
+      },
     });
 
     return result.toUIMessageStreamResponse();

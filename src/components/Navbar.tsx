@@ -98,7 +98,7 @@ export default function Navbar() {
     : null;
 
   return (
-    <nav className="sticky top-0 z-[100] w-full px-6 py-3 flex items-center gap-8 bg-background transition-all">
+    <nav className="sticky top-0 z-[100] w-full px-14 py-3 flex items-center gap-8 bg-background transition-all">
       {/* Brand Logo */}
       <Link href="/" className="text-2xl font-black tracking-tighter text-black hover:text-accent transition-colors">
         ADI-I
