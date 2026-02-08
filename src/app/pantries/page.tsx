@@ -21,11 +21,14 @@ interface SnapResult {
   photoName?: string;
 }
 
-interface TestData {
+interface PlacesData {
   places: PlaceResult[];
   snap: SnapResult[];
   errors: string[];
 }
+
+// Module-level cache — survives tab switches within the same session
+const placesCache = new Map<string, PlacesData>();
 
 function distanceMiles(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 3958.8;
@@ -37,30 +40,40 @@ function distanceMiles(lat1: number, lng1: number, lat2: number, lng2: number): 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export default function TestPage() {
+export default function PantriesPage() {
   const { location } = useLocation();
-  const [data, setData] = useState<TestData | null>(null);
+  const cacheKey = location ? `${location.lat},${location.lng}` : null;
+  const [data, setData] = useState<PlacesData | null>(() =>
+    cacheKey ? placesCache.get(cacheKey) ?? null : null
+  );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!location) return;
+    if (!location || !cacheKey) return;
+    if (placesCache.has(cacheKey)) {
+      setData(placesCache.get(cacheKey)!);
+      return;
+    }
     setLoading(true);
-    setData(null);
     fetch(`/api/test-search?lat=${location.lat}&lng=${location.lng}`)
       .then((res) => res.json())
-      .then((d) => setData(d))
+      .then((d) => {
+        placesCache.set(cacheKey, d);
+        setData(d);
+      })
       .catch((err) => setData({ places: [], snap: [], errors: [String(err)] }))
       .finally(() => setLoading(false));
-  }, [location?.lat, location?.lng]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cacheKey]);
 
   return (
     <div className="min-h-screen bg-white dark:bg-black p-8 font-sans">
       <h1 className="text-2xl font-bold mb-2 text-zinc-900 dark:text-zinc-100">
-        API Test Page
+        Pantries &amp; SNAP Retailers
       </h1>
       {location ? (
         <p className="text-zinc-500 text-sm mb-6">
-          📍 {location.address} ({(+location.lat).toFixed(4)}, {(+location.lng).toFixed(4)}) 
+          Near {location.address.split(",").slice(0, 2).join(",")} — edit in the nav bar
         </p>
       ) : (
         <p className="text-zinc-400 text-sm mb-6">Set your location in the nav bar to search.</p>
@@ -81,7 +94,7 @@ export default function TestPage() {
         <div className="space-y-8">
           <section>
             <h2 className="text-lg font-semibold mb-3 text-zinc-900 dark:text-zinc-100">
-              Google Places Results ({data.places.length})
+              Food Pantries ({data.places.length})
             </h2>
             {data.places.length === 0 ? (
               <p className="text-zinc-400 text-sm">No results (is GOOGLE_PLACES_API_KEY set in .env.local?)</p>

@@ -8,7 +8,7 @@ import { useLocation, geocodeAddress } from "@/contexts/LocationContext";
 const links = [
   { href: "/", label: "Home" },
   { href: "/coupons", label: "Coupons" },
-  { href: "/test", label: "Test" },
+  { href: "/pantries", label: "Pantries" },
 ];
 
 interface Suggestion {
