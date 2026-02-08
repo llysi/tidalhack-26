@@ -1,4 +1,5 @@
 import Chat from "@/components/Chat";
+import BudgetChatbot from "@/components/BudgetChatbot";
 
 export default function Home() {
   return (
@@ -6,12 +7,14 @@ export default function Home() {
       {/* TODO: Add a header/logo bar if desired */}
       <header className="border-b border-zinc-200 dark:border-zinc-800 px-6 py-4">
         <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          Food Resource Finder
+          ADI-I
         </h1>
       </header>
 
-      <main className="flex-1 overflow-hidden">
-        <Chat phase="intake" />
+      <main className="flex-1 overflow-hidden p-6">
+        <div className="max-w-2xl mx-auto">
+          <BudgetChatbot />
+        </div>
       </main>
     </div>
   );

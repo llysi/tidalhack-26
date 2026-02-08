@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.28",
+    "@ai-sdk/react": "^3.0.79",
     "ai": "^6.0.77",
     "next": "16.1.6",
     "react": "19.2.3",

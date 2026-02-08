@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 
@@ -15,10 +15,69 @@ interface ChatProps {
 export default function Chat({ phase }: ChatProps) {
   const [input, setInput] = useState("");
 
+  const [sessionId] = useState(() => {
+    try {
+      // Use Web Crypto API when available for a stable unique id
+      // Fallback to timestamp when not available
+      // cast to any to avoid TS issues in some environments
+      return (globalThis as any)?.crypto?.randomUUID?.() ?? String(Date.now());
+    } catch {
+      return String(Date.now());
+    }
+  });
+
+  useEffect(() => {
+    try {
+      // Clear client storage so the app always starts fresh on each visit
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {
+      // ignore storage errors (e.g., SSR or blocked storage)
+    }
+  }, []);
+
+
+  const [coords, setCoords] = useState<{lat: number, lng: number} | null>(null);
+const [locError, setLocError] = useState<string>("");
+
+
+const handleGetLocation = () => {
+  if (!navigator.geolocation) {
+    setLocError("Geolocation is not supported by your browser.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      setCoords({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      });
+      console.log("Location captured:", position.coords.latitude, position.coords.longitude);
+    },
+    (error) => {
+      setLocError("Location access denied. Please enter your zip code manually.");
+    }
+  );
+};
+
+<div className="flex flex-col gap-2">
+  <button 
+    onClick={handleGetLocation}
+    className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+  >
+    📍 Use My Current Location
+  </button>
+  
+  {coords && <p className="text-green-500 text-sm">Location set!</p>}
+  {locError && <p className="text-red-500 text-sm">{locError}</p>}
+</div>
+
+
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
-      body: { phase },
+      body: { phase, sessionId },
     }),
     // TODO: If you need to intercept tool calls (e.g. route_to_results),
     // use the onToolCall callback:
@@ -46,6 +105,8 @@ export default function Chat({ phase }: ChatProps) {
       .map((part) => part.text)
       .join("");
   }
+
+  
 
   return (
     <div className="flex h-full flex-col">
