@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Outfit, DM_Sans, Plus_Jakarta_Sans } from "next/font
 import "./globals.css";
 import Navbar from "../components/Navbar";
 import { LocationProvider } from "../contexts/LocationContext";
+import { BasketProvider } from "../contexts/BasketContext";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -23,11 +24,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} ${dmSans.variable} ${jakarta.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} ${dmSans.variable} ${jakarta.variable} antialiased bg-background text-foreground`}
       >
         <LocationProvider>
-          <Navbar />
-          {children}
+          <BasketProvider>
+            <Navbar />
+            <main className="px-4 md:px-8 max-w-[1600px] mx-auto">
+              {children}
+            </main>
+          </BasketProvider>
         </LocationProvider>
       </body>
     </html>
