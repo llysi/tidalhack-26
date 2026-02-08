@@ -68,7 +68,16 @@ export default function CouponsPage() {
   }, [coupons, activeStore, search]);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="relative max-w-2xl mx-auto px-4 py-6">
+      {loading && (
+        <div className="fixed inset-x-0 bottom-0 top-14 z-40 flex items-center justify-center bg-white/60 dark:bg-black/60 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-4 border-zinc-300 dark:border-zinc-600 border-t-blue-500 rounded-full animate-spin" />
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading deals…</p>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
         Grocery Deals
       </h1>
@@ -107,9 +116,6 @@ export default function CouponsPage() {
           ))}
         </div>
       )}
-
-      {/* Status */}
-      {loading && <p className="text-zinc-400 text-sm">Loading deals...</p>}
 
       {/* Errors */}
       {errors.length > 0 && (
