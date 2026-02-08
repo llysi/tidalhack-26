@@ -127,9 +127,13 @@ export default function CouponsPage() {
                   ${coupon.regularPrice.toFixed(2)}
                 </span>
               )}
-              <span className="text-sm font-semibold text-green-600 dark:text-green-400">
-                ${coupon.couponPrice.toFixed(2)}
-              </span>
+              {coupon.couponPrice != null ? (
+                <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                  ${coupon.couponPrice.toFixed(2)}
+                </span>
+              ) : (
+                <span className="text-xs text-zinc-400">see store</span>
+              )}
             </div>
           </li>
         ))}
