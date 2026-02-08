@@ -1,8 +1,10 @@
 export interface Coupon {
   store: string; // merchant name as returned by Flipp
+  itemId?: number; // Flipp item id, used to fetch sale_story detail
   item: string;
   regularPrice?: number;
   couponPrice?: number;
+  dealText?: string; // sale_story from Flipp item detail (e.g. "Save $10 off your basket...")
   savings?: number;
   unit?: string; // e.g. "per lb", "each"
   expires?: string;
