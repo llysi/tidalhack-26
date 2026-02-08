@@ -82,123 +82,142 @@ export default function CouponsPage() {
   }, [coupons, activeStore, search]);
 
   return (
-    // Inside your return statement
-<div className="max-w-[1600px] mx-auto px-4 py-6">
-  
-  {/* NEW: Full-width Header above both sections */}
-  <header className="mb-8 w-full border-b border-zinc-100 dark:border-zinc-800 pb-6">
-    <h1 className="text-4xl font-black tracking-tighter text-zinc-900 dark:text-zinc-100">
-      Grocery Deals & Store Finder
-    </h1>
-    <div className="flex items-center gap-2 mt-2">
-      <span className="relative flex h-2 w-2">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-      </span>
-      <p className="text-sm text-zinc-500 font-medium">
-        {location ? `Live deals near ${location.address.split(",")[0]}` : "Set location to see local prices"}
-      </p>
-    </div>
-  </header>
-
-  <div className="flex flex-col lg:flex-row gap-8 items-start">
-    
-    {/* Left Side: Map (Sticky) */}
-    <div className="w-full lg:w-[55%] lg:sticky lg:top-6 order-2 lg:order-1">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-bold flex items-center gap-2">
-          <span className="text-blue-600">📍</span> SNAP Retailers
-        </h2>
-        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md">
-          {snapStores.length} locations
-        </span>
-      </div>
-      
-      <div className="h-[450px] lg:h-[calc(100vh-180px)] rounded-3xl overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 shadow-2xl">
-        <CouponStoreMap
-          stores={snapStores}
-          activeStore={activeStore}
-          onSelectStore={(name) => {
-            const match = stores.find((s) =>
-              name.toLowerCase().includes(s.id.toLowerCase().split(" ")[0])
-            );
-            if (match) setActiveStore(match.id);
-          }}
-          userLat={location?.lat}
-          userLng={location?.lng}
-        />
-      </div>
-    </div>
-
-    {/* Right Side: Search & Coupons */}
-    <div className="w-full lg:w-[45%] order-1 lg:order-2">
-      {/* Search Input aligned with Top of Map */}
-      <div className="sticky top-0 bg-white dark:bg-black z-10 pb-4">
-        <input
-          type="search"
-          placeholder="Search items, brands, or stores..."
-          className="w-full px-5 py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border-2 border-transparent focus:border-blue-500 focus:bg-white transition-all outline-none shadow-sm"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-      
-      {!search && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          {stores.map(({ id, count }) => (
-            <button
-              key={id}
-              onClick={() => setActiveStore(id)}
-              className={`text-[11px] px-3 py-2 rounded-xl font-black transition-all uppercase tracking-tight ${
-                activeStore === id 
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-200" 
-                  : "bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:border-zinc-400"
-              }`}
-            >
-              {id} <span className="opacity-50 ml-1">{count}</span>
-            </button>
-          ))}
+    <div className="max-w-[1600px] mx-auto px-6 py-8 bg-background min-h-screen">
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-4 border-zinc-200 border-t-foreground rounded-full animate-spin" />
+            <p className="text-sm font-medium text-foreground">Loading local deals...</p>
+          </div>
         </div>
       )}
 
-      {/* Coupon List */}
-      <div className="space-y-3">
-        {filtered.map((coupon, i) => (
-          <div key={i} className="group p-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:border-blue-200 transition-all cursor-pointer">
-            <div className="flex gap-4">
-              <div className="w-20 h-20 bg-zinc-50 dark:bg-zinc-800 rounded-xl flex-shrink-0 flex items-center justify-center p-2">
-                {coupon.imageUrl ? (
-                  <img src={coupon.imageUrl} alt="" className="max-w-full max-h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
-                ) : (
-                  <span className="text-2xl opacity-20">🛒</span>
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-bold text-sm leading-snug text-zinc-800 dark:text-zinc-200">{coupon.item}</h3>
-                  <div className="text-right">
-                    <p className="font-black text-blue-600 text-lg">${coupon.couponPrice?.toFixed(2)}</p>
-                    {coupon.regularPrice && (
-                      <p className="text-[10px] text-zinc-400 line-through">${coupon.regularPrice.toFixed(2)}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 mt-2">
-                   <p className="text-[10px] text-zinc-500 font-bold uppercase">{coupon.storeName}</p>
-                   {coupon.snapEligible && (
-                    <span className="bg-emerald-50 text-emerald-700 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-100">
-                      SNAP APPROVED
-                    </span>
-                  )}
-                </div>
-              </div>
+      {/* Global Header */}
+      <header className="mb-10 w-full border-b border-zinc-200 pb-8">
+        <h1 className="text-5xl font-black tracking-tighter text-foreground leading-none">
+          Deals
+        </h1>
+        <div className="flex items-center gap-3 mt-4">
+          <span className="px-2 py-1 bg-accent/10 text-accent text-[10px] font-black uppercase rounded tracking-widest">
+            Live Feed
+          </span>
+          <p className="text-sm text-zinc-500 font-medium italic">
+            {location ? `Exploring ${location.address.split(",")[0]}` : "Set location to find deals"}
+          </p>
+        </div>
+      </header>
+
+      <div className="flex flex-col lg:flex-row gap-10 items-start">
+        {/* Left: Interactive Map Sidebar */}
+        <aside className="w-full lg:w-[55%] lg:sticky lg:top-8 order-2 lg:order-1">
+          <div className="flex justify-between items-center mb-5">
+            <h2 className="text-xl font-black text-foreground uppercase tracking-tight">
+              Store Map
+            </h2>
+            <div className="px-3 py-1 bg-zinc-100 rounded-full text-[10px] font-bold text-zinc-500">
+              {snapStores.length} SNAP LOCATIONS
             </div>
           </div>
-        ))}
-      </div>
-    </div>
+          
+          <div className="h-[450px] lg:h-[calc(100vh-220px)] rounded-[2.5rem] overflow-hidden border-2 border-zinc-200 shadow-2xl shadow-zinc-200/50">
+            <CouponStoreMap
+              stores={snapStores}
+              activeStore={activeStore}
+              onSelectStore={(name) => {
+                const match = stores.find((s) =>
+                  name.toLowerCase().includes(s.id.toLowerCase().split(" ")[0])
+                );
+                if (match) setActiveStore(match.id);
+              }}
+              userLat={location?.lat}
+              userLng={location?.lng}
+            />
+          </div>
+        </aside>
 
-  </div>
-</div>
+        {/* Right: Search & Coupon Feed */}
+        <main className="w-full lg:w-[45%] order-1 lg:order-2">
+          {/* Fixed Search Area */}
+          <div className="sticky top-0 bg-background/95 backdrop-blur-md z-20 pb-6">
+            <input
+              type="search"
+              placeholder="Search items, brands, or stores..."
+              className="w-full px-6 py-5 rounded-2xl bg-white border-2 border-zinc-100 focus:border-accent text-foreground transition-all outline-none shadow-sm placeholder:text-zinc-400"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          
+          {/* Store Tabs */}
+          {!search && (
+            <div className="flex flex-wrap gap-2 mb-8">
+              {stores.map(({ id, count }) => (
+                <button
+                  key={id}
+                  onClick={() => setActiveStore(id)}
+                  className={`text-[11px] px-4 py-2.5 rounded-xl font-black transition-all uppercase tracking-tighter ${
+                    activeStore === id 
+                      ? "bg-foreground text-background shadow-xl scale-105" 
+                      : "bg-white border border-zinc-200 text-zinc-400 hover:border-zinc-300"
+                  }`}
+                >
+                  {id} <span className="opacity-40 ml-1">{count}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Result Feed */}
+          <div className="space-y-4">
+            {filtered.length > 0 ? (
+              filtered.map((coupon, i) => (
+                <div key={i} className="group p-5 bg-white border border-zinc-100 rounded-[1.5rem] hover:border-accent/30 hover:shadow-xl transition-all duration-300 cursor-pointer">
+                  <div className="flex gap-5">
+                    <div className="w-24 h-24 bg-zinc-50 rounded-2xl flex-shrink-0 flex items-center justify-center p-3 border border-zinc-50 group-hover:bg-white transition-colors">
+                      {coupon.imageUrl ? (
+                        <img src={coupon.imageUrl} alt="" className="max-w-full max-h-full object-contain" />
+                      ) : (
+                        <span className="text-3xl grayscale opacity-20">🛒</span>
+                      )}
+                    </div>
+                    <div className="flex-1 py-1">
+                      <div className="flex justify-between items-start gap-4">
+                        <h3 className="font-bold text-base leading-tight text-foreground group-hover:text-accent transition-colors">
+                          {coupon.item}
+                        </h3>
+                        <div className="text-right">
+                          <p className="font-black text-accent text-xl leading-none">
+                            ${coupon.couponPrice?.toFixed(2)}
+                          </p>
+                          {coupon.regularPrice && (
+                            <p className="text-[10px] text-zinc-400 line-through mt-1">
+                              ${coupon.regularPrice.toFixed(2)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 mt-4">
+                         <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">{coupon.storeName}</p>
+                         {coupon.snapEligible && (
+                          <span className="bg-accent/10 text-accent text-[8px] font-black px-2 py-1 rounded-md border border-accent/20">
+                            SNAP
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-20 border-2 border-dashed border-zinc-200 rounded-[2rem]">
+                <p className="text-zinc-400 font-medium italic">No deals found for this selection.</p>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+
+      {coupons.length > 0 && <CouponChat coupons={coupons} />}
+    </div>
   );
 }
