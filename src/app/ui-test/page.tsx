@@ -152,10 +152,10 @@ export default function UITestPage() {
           transition: "opacity 0.7s ease, transform 0.7s ease",
         }}
       >
-        <h1 className="text-5xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+        <h1 className="text-5xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
           ADI-I
         </h1>
-        <p className="text-zinc-500 dark:text-zinc-400 mt-3 text-lg">
+        <p className="mt-3 text-lg" style={{ color: "var(--foreground)", opacity: 0.7 }}>
           Your AI food resource assistant
         </p>
       </div>
@@ -169,17 +169,18 @@ export default function UITestPage() {
           transition: "opacity 0.7s ease, transform 0.7s ease",
         }}
       >
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-xl overflow-hidden flex flex-col h-[520px]">
+        <div className="border rounded-2xl shadow-xl overflow-hidden flex flex-col h-[520px]" style={{ background: "var(--background)", borderColor: "color-mix(in srgb, var(--foreground) 15%, transparent)" }}>
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                  className="max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
+                  style={
                     msg.role === "user"
-                      ? "bg-blue-600 text-white"
-                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                  }`}
+                      ? { background: "var(--accent)", color: "var(--accent-fg)" }
+                      : { background: "color-mix(in srgb, var(--foreground) 8%, transparent)", color: "var(--foreground)" }
+                  }
                 >
                   {msg.text}
                 </div>
@@ -191,13 +192,15 @@ export default function UITestPage() {
               <div className="flex gap-2 pl-1 pt-1">
                 <button
                   onClick={() => handleCar(true)}
-                  className="px-4 py-2 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm font-medium hover:bg-green-200 dark:hover:bg-green-800 transition"
+                  className="px-4 py-2 rounded-full text-sm font-medium transition"
+                  style={{ background: "color-mix(in srgb, var(--accent) 15%, transparent)", color: "var(--foreground)" }}
                 >
                   Yes
                 </button>
                 <button
                   onClick={() => handleCar(false)}
-                  className="px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-sm font-medium hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
+                  className="px-4 py-2 rounded-full text-sm font-medium transition"
+                  style={{ background: "color-mix(in srgb, var(--foreground) 8%, transparent)", color: "var(--foreground)" }}
                 >
                   No
                 </button>
@@ -211,7 +214,8 @@ export default function UITestPage() {
                   <button
                     key={s.placeId}
                     onClick={() => selectAddress(s)}
-                    className="block w-full text-left px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-600 dark:hover:text-blue-300 transition"
+                    className="block w-full text-left px-3 py-2 rounded-xl text-sm transition"
+                    style={{ background: "color-mix(in srgb, var(--foreground) 5%, transparent)", color: "var(--foreground)" }}
                   >
                     {s.description}
                   </button>
@@ -220,7 +224,7 @@ export default function UITestPage() {
             )}
 
             {geocoding && (
-              <p className="text-xs text-zinc-400 pl-1">Locating…</p>
+              <p className="text-xs pl-1" style={{ color: "var(--foreground)", opacity: 0.5 }}>Locating…</p>
             )}
 
             <div ref={bottomRef} />
@@ -228,7 +232,7 @@ export default function UITestPage() {
 
           {/* Scrolling suggestion chips */}
           {step !== "done" && step !== "car" && (
-            <div className="overflow-hidden border-t border-zinc-100 dark:border-zinc-800 py-2">
+            <div className="overflow-hidden py-2" style={{ borderTop: "1px solid color-mix(in srgb, var(--foreground) 10%, transparent)" }}>
               <div
                 className="flex gap-2 w-max"
                 style={{ animation: "marquee 28s linear infinite" }}
@@ -237,7 +241,8 @@ export default function UITestPage() {
                   <button
                     key={i}
                     onClick={() => handleSubmit(s)}
-                    className="shrink-0 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-600 dark:hover:text-blue-300 transition"
+                    className="shrink-0 px-3 py-1.5 rounded-full text-xs transition"
+                    style={{ background: "color-mix(in srgb, var(--foreground) 8%, transparent)", color: "var(--foreground)" }}
                   >
                     {s}
                   </button>
@@ -257,18 +262,25 @@ export default function UITestPage() {
                   handleSubmit();
                 }
               }}
-              className="border-t border-zinc-200 dark:border-zinc-700 flex gap-2 p-3"
+              className="flex gap-2 p-3"
+              style={{ borderTop: "1px solid color-mix(in srgb, var(--foreground) 10%, transparent)" }}
             >
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={placeholder}
-                className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 rounded-full px-4 py-2 text-sm focus:outline-none"
+                style={{
+                  background: "color-mix(in srgb, var(--foreground) 6%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--foreground) 15%, transparent)",
+                  color: "var(--foreground)",
+                }}
               />
               <button
                 type="submit"
                 disabled={!input.trim()}
-                className="rounded-full bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-40 transition"
+                className="rounded-full px-4 py-2 text-sm transition disabled:opacity-40"
+                style={{ background: "var(--accent)", color: "var(--accent-fg)" }}
               >
                 →
               </button>

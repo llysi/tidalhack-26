@@ -182,6 +182,33 @@ function isFoodItem(name: string): boolean {
   return !NON_FOOD_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
+// Stores known to accept SNAP/EBT (case-insensitive substring match)
+const SNAP_STORES = [
+  "walmart", "kroger", "safeway", "publix", "aldi", "target", "whole foods",
+  "trader joe", "sprouts", "meijer", "wegman", "giant", "stop & shop",
+  "king soopers", "smith", "fry's", "ralphs", "vons", "jewel", "shaw",
+  "hannaford", "winn", "piggly", "hy-vee", "brookshire", "h-e-b", "heb",
+  "costco", "sam's", "sams club", "bj's", "lidl", "save", "food lion",
+  "market basket", "price chopper", "stater bros", "winco",
+  "dollar general", "family dollar", "dollar tree",
+];
+
+function isSnapStore(name: string): boolean {
+  const lower = name.toLowerCase();
+  return SNAP_STORES.some((s) => lower.includes(s));
+}
+
+// Categories that are SNAP/EBT eligible (excludes hot prepared foods, alcohol, etc.)
+const SNAP_ELIGIBLE_CATEGORIES = new Set([
+  "produce", "meat", "seafood", "dairy", "bakery", "frozen",
+  "grains", "baking", "pantry", "beverages", "snacks", "specialty", "herbs",
+]);
+
+function isSnapEligibleItem(category: string | undefined): boolean {
+  if (!category) return false;
+  return SNAP_ELIGIBLE_CATEGORIES.has(category);
+}
+
 // Keywords that identify grocery / food stores (case-insensitive)
 const GROCERY_KEYWORDS = [
   "grocery", "supermarket", "market", "food", "farm", "kroger", "aldi",
@@ -212,6 +239,7 @@ function parseItem(i: Record<string, unknown>, fallbackMerchant = ""): Coupon | 
     itemId: i.id as number | undefined,
     item: name,
     category: classifyFood(name),
+    snapEligible: isSnapStore(merchant) && isSnapEligibleItem(classifyFood(name)),
     regularPrice: regular,
     couponPrice: salePrice,
     savings: regular != null && salePrice != null ? Math.max(0, regular - salePrice) : undefined,
@@ -241,6 +269,7 @@ async function fetchFlyerItems(flyerId: number, merchantName: string): Promise<C
         itemId: i.id as number | undefined,
         item: name,
         category: classifyFood(name),
+        snapEligible: isSnapStore(merchantName) && isSnapEligibleItem(classifyFood(name)),
         couponPrice: salePrice,
         expires: i.valid_to as string | undefined,
         imageUrl: (i.cutout_image_url as string | undefined) || undefined,

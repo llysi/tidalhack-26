@@ -3,6 +3,7 @@ export interface Coupon {
   itemId?: number; // Flipp item id, used to fetch sale_story detail
   item: string;
   category?: string; // food category tag (e.g. "produce", "dairy", "meat")
+  snapEligible?: boolean; // store accepts SNAP/EBT
   regularPrice?: number;
   couponPrice?: number;
   dealText?: string; // sale_story from Flipp item detail (e.g. "Save $10 off your basket...")
