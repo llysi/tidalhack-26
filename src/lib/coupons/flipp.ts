@@ -61,49 +61,93 @@ const NON_FOOD_KEYWORDS = [
 // Allowlist: if a name matches any food keyword, it's definitely food
 // (overrides false positives from the blocklist)
 const FOOD_KEYWORDS = [
-  // Produce
+  // Fruit
   "apple", "banana", "orange", "grape", "berry", "strawberry", "blueberry",
-  "raspberry", "blackberry", "cranberry", "tomato", "potato", "onion",
-  "garlic", "pepper", "broccoli", "spinach", "lettuce", "carrot", "celery",
-  "corn", "mushroom", "squash", "zucchini", "cucumber", "avocado", "lime",
-  "lemon", "peach", "plum", "pear", "melon", "watermelon", "cantaloupe",
-  "cherry", "mango", "pineapple", "kiwi", "grapefruit", "asparagus",
-  "cauliflower", "cabbage", "kale", "arugula", "chard", "eggplant", "beet",
-  "radish", "turnip", "sweet potato", "yam", "leek", "artichoke",
-  // Meat / seafood
+  "raspberry", "blackberry", "cranberry", "peach", "plum", "pear", "melon",
+  "watermelon", "cantaloupe", "honeydew", "cherry", "mango", "pineapple",
+  "kiwi", "grapefruit", "lime", "lemon", "nectarine", "apricot", "fig",
+  "date", "papaya", "guava", "pomegranate", "persimmon", "lychee",
+  "clementine", "tangerine", "mandarin", "passion fruit", "dragon fruit",
+  "jackfruit", "plantain", "coconut",
+  // Vegetables
+  "tomato", "potato", "onion", "garlic", "pepper", "broccoli", "spinach",
+  "lettuce", "carrot", "celery", "corn", "mushroom", "squash", "zucchini",
+  "cucumber", "avocado", "asparagus", "cauliflower", "cabbage", "kale",
+  "arugula", "chard", "eggplant", "beet", "radish", "turnip", "sweet potato",
+  "yam", "leek", "artichoke", "fennel", "parsnip", "rutabaga", "kohlrabi",
+  "jicama", "tomatillo", "jalapeno", "habanero", "serrano", "poblano",
+  "romaine", "bok choy", "endive", "scallion", "green onion", "shallot",
+  "ginger", "turmeric", "edamame", "okra", "collard", "brussels sprout",
+  "snap pea", "snow pea", "green bean", "wax bean",
+  // Herbs & spices
+  "cilantro", "parsley", "basil", "mint", "thyme", "rosemary", "sage",
+  "dill", "chive", "oregano", "cumin", "coriander", "paprika", "cinnamon",
+  "nutmeg", "chili powder", "curry", "turmeric", "bay leaf", "vanilla",
+  // Meat
   "chicken", "beef", "pork", "turkey", "lamb", "veal", "bison", "venison",
+  "duck", "goose", "rabbit", "elk", "steak", "roast", "ground beef",
+  "ground turkey", "ground pork", "ground chicken", "sausage", "bacon",
+  "ham", "hot dog", "bratwurst", "deli meat", "rotisserie", "wing",
+  "drumstick", "thigh", "breast", "rib", "chop", "tenderloin", "filet",
+  "loin", "brisket", "chuck", "sirloin", "ribeye", "flank", "short rib",
+  "pulled pork", "meatball", "burger", "patty", "jerky", "pepperoni",
+  "salami", "prosciutto", "chorizo", "kielbasa",
+  // Seafood
   "fish", "salmon", "tuna", "tilapia", "cod", "shrimp", "crab", "lobster",
-  "steak", "roast", "ground beef", "ground turkey", "sausage", "bacon",
-  "ham", "hot dog", "bratwurst", "deli meat", "rotisserie", "wing", "drumstick",
-  "rib", "chop", "tenderloin", "filet", "loin",
+  "sardine", "anchovy", "clam", "oyster", "scallop", "mussel", "squid",
+  "mahi", "snapper", "halibut", "bass", "trout", "catfish", "flounder",
+  "sole", "crawfish", "crayfish", "octopus",
   // Dairy / eggs
   "milk", "cheese", "yogurt", "butter", "cream", "egg", "sour cream",
   "cottage cheese", "cream cheese", "whipped cream", "half and half",
+  "kefir", "ricotta", "brie", "cheddar", "gouda", "mozzarella", "parmesan",
+  "feta", "provolone", "swiss", "colby", "monterey jack", "goat cheese",
+  "blue cheese", "string cheese", "creamer",
   // Bakery / bread
   "bread", "roll", "bun", "muffin", "cake", "cookie", "donut", "bagel",
   "tortilla", "croissant", "biscuit", "pastry", "pie", "waffle", "pancake",
+  "sourdough", "focaccia", "ciabatta", "pita", "naan", "flatbread", "brioche",
+  "tart", "scone", "danish", "cinnamon roll", "pound cake", "brownie",
+  "cheesecake",
   // Frozen
   "ice cream", "frozen pizza", "frozen meal", "frozen vegetable", "frozen fruit",
-  "popsicle", "gelato", "sorbet",
-  // Pantry staples
-  "rice", "pasta", "noodle", "soup", "sauce", "oil", "vinegar", "spice",
-  "seasoning", "flour", "sugar", "salt", "cereal", "oatmeal", "granola",
-  "cracker", "chip", "snack", "popcorn", "pretzel", "nut", "peanut",
-  "almond", "walnut", "cashew", "pecan", "pistachio", "bean", "lentil",
-  "chickpea", "canned", "condiment", "ketchup", "mustard", "mayo",
+  "frozen dinner", "frozen breakfast", "frozen waffle", "frozen pancake",
+  "popsicle", "gelato", "sorbet", "frozen entree",
+  // Grains / pantry starches
+  "rice", "pasta", "noodle", "quinoa", "couscous", "barley", "farro",
+  "bulgur", "millet", "oat", "grits", "polenta", "cornmeal", "breadcrumb",
+  "panko",
+  // Baking
+  "flour", "sugar", "yeast", "baking soda", "baking powder", "cocoa",
+  // Pantry
+  "soup", "sauce", "oil", "vinegar", "seasoning", "cereal", "oatmeal",
+  "granola", "cracker", "chip", "snack", "popcorn", "pretzel", "nut",
+  "peanut", "almond", "walnut", "cashew", "pecan", "pistachio", "bean",
+  "lentil", "chickpea", "canned", "condiment", "ketchup", "mustard", "mayo",
   "salad dressing", "syrup", "honey", "jam", "jelly", "peanut butter",
-  "almond butter", "hummus", "salsa", "guacamole", "dip",
+  "almond butter", "hummus", "salsa", "guacamole", "dip", "pickle", "relish",
+  "olive", "capers", "broth", "stock", "gravy", "soy sauce", "teriyaki",
+  "sriracha", "hot sauce", "bbq sauce", "buffalo sauce", "marinara", "pesto",
+  "alfredo", "ranch", "caesar", "balsamic", "tahini", "miso", "kimchi",
+  "sauerkraut", "tomato paste", "tomato sauce",
   // Beverages
   "coffee", "tea", "juice", "soda", "water", "drink", "beverage",
-  "sports drink", "energy drink", "milk alternative", "almond milk",
-  "oat milk", "soy milk",
+  "sports drink", "energy drink", "almond milk", "oat milk", "soy milk",
+  "coconut milk", "rice milk", "cashew milk", "lemonade", "sparkling water",
+  "coconut water", "kombucha", "smoothie", "cider",
   // Deli / prepared
-  "deli", "sandwich", "wrap", "prepared meal", "rotisserie",
-  // Seafood / canned
-  "tuna", "sardine", "anchovy", "clam", "oyster",
+  "deli", "sandwich", "wrap", "rotisserie", "burrito", "taco", "quesadilla",
+  "pizza", "lasagna", "casserole", "stew", "chili", "stir fry", "fried rice",
+  "dumpling", "spring roll", "egg roll", "sushi",
   // Snacks / sweets
   "chocolate", "candy", "gummy", "licorice", "marshmallow", "caramel",
-  "trail mix", "dried fruit", "raisin",
+  "trail mix", "dried fruit", "raisin", "protein bar", "granola bar",
+  "energy bar", "rice cake", "beef jerky", "pudding", "applesauce",
+  "fruit cup", "fruit snack", "fudge",
+  // International / specialty
+  "tofu", "tempeh", "seaweed", "mochi", "instant noodle", "ramen",
+  "udon", "soba", "vermicelli", "falafel", "pita chip", "tortilla chip",
+  "nacho", "salsa verde",
 ];
 
 function isFoodItem(name: string): boolean {

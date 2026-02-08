@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { useLocation, geocodeAddress } from "@/contexts/LocationContext";
+import { useLocation, geocodeAddress, RADIUS_OPTIONS } from "@/contexts/LocationContext";
 
 const links = [
   { href: "/", label: "Home" },
@@ -18,7 +18,7 @@ interface Suggestion {
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { location, setLocation } = useLocation();
+  const { location, setLocation, radius, setRadius } = useLocation();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [geocoding, setGeocoding] = useState(false);
@@ -119,8 +119,21 @@ export default function Navbar() {
         </Link>
       ))}
 
+      {/* Radius selector */}
+      <div className="ml-auto flex items-center gap-2">
+        <select
+          value={radius}
+          onChange={(e) => setRadius(Number(e.target.value) as typeof RADIUS_OPTIONS[number])}
+          className="text-xs text-zinc-500 dark:text-zinc-400 bg-transparent border border-zinc-200 dark:border-zinc-700 rounded px-1.5 py-0.5 focus:outline-none cursor-pointer"
+        >
+          {RADIUS_OPTIONS.map((r) => (
+            <option key={r} value={r}>{r} mi</option>
+          ))}
+        </select>
+      </div>
+
       {/* Location */}
-      <div className="ml-auto flex items-center gap-2 relative">
+      <div className="flex items-center gap-2 relative">
         {editing ? (
           <div className="relative">
             <form

@@ -38,7 +38,7 @@ export async function GET(req: Request) {
 
   try {
     // Autocomplete to get place_id
-    const acParams = new URLSearchParams({ input: q, key, types: "geocode" });
+    const acParams = new URLSearchParams({ input: q, key, types: "address" });
     const acRes = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?${acParams}`);
     if (!acRes.ok) return Response.json(null);
     const acData = await acRes.json();

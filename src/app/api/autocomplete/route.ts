@@ -7,7 +7,7 @@ export async function GET(req: Request) {
   if (!key) return Response.json([]);
 
   try {
-    const params = new URLSearchParams({ input: q, key, types: "geocode" });
+    const params = new URLSearchParams({ input: q, key, types: "address" });
     const res = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?${params}`);
     if (!res.ok) return Response.json([]);
     const data = await res.json();

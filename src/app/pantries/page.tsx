@@ -41,8 +41,8 @@ function distanceMiles(lat1: number, lng1: number, lat2: number, lng2: number): 
 }
 
 export default function PantriesPage() {
-  const { location } = useLocation();
-  const cacheKey = location ? `${location.lat},${location.lng}` : null;
+  const { location, radius } = useLocation();
+  const cacheKey = location ? `${location.lat},${location.lng},${radius}` : null;
   const [data, setData] = useState<PlacesData | null>(() =>
     cacheKey ? placesCache.get(cacheKey) ?? null : null
   );
@@ -55,7 +55,7 @@ export default function PantriesPage() {
       return;
     }
     setLoading(true);
-    fetch(`/api/test-search?lat=${location.lat}&lng=${location.lng}`)
+    fetch(`/api/test-search?lat=${location.lat}&lng=${location.lng}&radius=${radius * 1609}`)
       .then((res) => res.json())
       .then((d) => {
         placesCache.set(cacheKey, d);
@@ -68,6 +68,15 @@ export default function PantriesPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black p-8 font-sans">
+      {loading && (
+        <div className="fixed inset-x-0 bottom-0 top-14 z-40 flex items-center justify-center bg-white/60 dark:bg-black/60 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-4 border-zinc-300 dark:border-zinc-600 border-t-blue-500 rounded-full animate-spin" />
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">Finding pantries…</p>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold mb-2 text-zinc-900 dark:text-zinc-100">
         Pantries &amp; SNAP Retailers
       </h1>
@@ -78,8 +87,6 @@ export default function PantriesPage() {
       ) : (
         <p className="text-zinc-400 text-sm mb-6">Set your location in the nav bar to search.</p>
       )}
-
-      {loading && <p className="text-zinc-400">Loading...</p>}
 
       {data && data.errors.length > 0 && (
         <div className="mb-6 p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">

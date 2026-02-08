@@ -6,11 +6,12 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const lat = parseFloat(searchParams.get("lat") ?? "29.7604");
     const lng = parseFloat(searchParams.get("lng") ?? "-95.3698");
+    const radiusMeters = parseInt(searchParams.get("radius") ?? "16090"); // default 10 miles
     const errors: string[] = [];
 
     const [placesResult, snapResult] = await Promise.allSettled([
-      searchPlaces("food pantry", lat, lng),
-      searchSnapRetailers(lat, lng),
+      searchPlaces("food pantry", lat, lng, radiusMeters),
+      searchSnapRetailers(lat, lng, radiusMeters),
     ]);
 
     const places =
