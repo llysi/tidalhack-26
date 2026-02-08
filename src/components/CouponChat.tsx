@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { Coupon } from "@/lib/coupons/types";
 import { useBasket } from "@/contexts/BasketContext";
+import { useLocation } from "@/contexts/LocationContext";
 import { getProfile, saveProfile, nextProfileQuestion, isProfileComplete } from "@/lib/user-profile";
 
 interface CouponChatProps {
@@ -33,6 +35,7 @@ function BotBubble({ text, size = "normal" }: { text: string; size?: "normal" | 
 }
 
 export default function CouponChat({ coupons, inline }: CouponChatProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [snapshot, setSnapshot] = useState<Coupon[]>([]);
@@ -40,6 +43,7 @@ export default function CouponChat({ coupons, inline }: CouponChatProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const handledTools = useRef<Set<string>>(new Set());
   const { items: basketItems, addItem } = useBasket();
+  const { location, setLocation } = useLocation();
 
   // Load profile from localStorage after mount (avoids SSR/client mismatch)
   useEffect(() => {
@@ -49,7 +53,7 @@ export default function CouponChat({ coupons, inline }: CouponChatProps) {
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/coupon-chat",
-      body: { coupons: snapshot, basket: basketItems, profile },
+      body: { coupons: snapshot, basket: basketItems, profile, location },
     }),
   });
 
@@ -70,6 +74,10 @@ export default function CouponChat({ coupons, inline }: CouponChatProps) {
         if (inv.toolName === "saveProfile") {
           saveProfile(inv.args);
           setProfile(getProfile());
+        }
+        if (inv.toolName === "setLocation" && !inv.result?.error) {
+          setLocation(inv.result);
+          if (inline) router.push("/coupons");
         }
       }
     }
@@ -156,7 +164,7 @@ export default function CouponChat({ coupons, inline }: CouponChatProps) {
     );
   }
 
-  const initialQuestion = nextProfileQuestion(profile);
+  const initialQuestion = nextProfileQuestion(profile, !!location);
 
   // Shared message list JSX (not a component — avoids remount on every render)
   const messageListJsx = (padded: boolean) => (
@@ -216,7 +224,7 @@ export default function CouponChat({ coupons, inline }: CouponChatProps) {
         style={{ background: "var(--background)", height: "460px" }}
       >
         <div className="flex items-center px-6 py-4" style={{ borderBottom: "1px solid color-mix(in srgb, var(--foreground) 8%, transparent)" }}>
-          <span className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>✨ ADI-I</span>
+          <span className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>✨ HoneyBear</span>
           <span className="ml-2 text-[10px] opacity-40 font-mono" style={{ color: "var(--foreground)" }}>Llama-3.1-70B</span>
           {isProfileComplete(profile) && (
             <span className="ml-auto text-[9px] opacity-40 font-mono" style={{ color: "var(--foreground)" }}>

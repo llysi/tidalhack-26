@@ -29,9 +29,10 @@ export function isProfileComplete(p: UserProfile): boolean {
 }
 
 /** Returns the first unanswered question to ask the user */
-export function nextProfileQuestion(p: UserProfile): string | null {
-  if (!p.people) return "Hi! I'm ADI-I 👋 To get started, how many people are you shopping for?";
-  if (!p.budget) return "Got it! What's your weekly grocery budget?";
-  if (!p.car) return "One more — do you have access to a car for grocery trips?";
+export function nextProfileQuestion(p: UserProfile, hasLocation?: boolean): string | null {
+  if (!hasLocation) return "Hi! I'm HoneyBear 👋 To get started, what's your full address? (e.g. 123 Main St, Chicago, IL)";
+  if (!p.people) return "Got it! How many people are you shopping for?";
+  if (!p.budget) return "What's your weekly grocery budget?";
+  if (!p.car) return "Do you have a car for grocery trips?";
   return null;
 }

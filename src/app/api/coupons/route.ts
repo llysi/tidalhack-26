@@ -18,7 +18,7 @@ async function findNearestStore(
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?${params}`,
-      { headers: { "User-Agent": "ADI-I/1.0" } }
+      { headers: { "User-Agent": "HoneyBear/1.0" } }
     );
     if (!res.ok) return undefined;
     const data = await res.json();
@@ -41,7 +41,7 @@ export async function GET(req: Request) {
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
-        { headers: { "User-Agent": "ADI-I/1.0" } }
+        { headers: { "User-Agent": "HoneyBear/1.0" } }
       );
       if (res.ok) {
         const data = await res.json();

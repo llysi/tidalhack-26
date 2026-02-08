@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image"; // Added for the SVG
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { useLocation, geocodeAddress } from "@/contexts/LocationContext";
@@ -99,9 +100,15 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-[100] w-full px-14 py-3 flex items-center gap-8 bg-background transition-all">
-      {/* Brand Logo */}
-      <Link href="/" className="text-2xl font-black tracking-tighter text-black hover:text-accent transition-colors">
-        ADI-I
+      {/* Bear Home Button */}
+      <Link href="/" className="hover:opacity-80 transition-opacity">
+        <Image 
+          src="/word-bear.svg" 
+          alt="Home" 
+          width={100} 
+          height={100} 
+          className="object-contain"
+        />
       </Link>
       
       <div className="flex items-center gap-8">

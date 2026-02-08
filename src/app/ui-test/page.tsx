@@ -31,7 +31,7 @@ interface AutocompleteSuggestion {
 const INITIAL_MESSAGES: Message[] = [
   {
     role: "bot",
-    text: "Hi! I'm ADI-I. I can help you find food resources, plan your grocery budget, and discover deals near you.",
+    text: "Hi! I'm HoneyBear. I can help you find food resources, plan your grocery budget, and discover deals near you.",
   },
   { role: "bot", text: "To get started — how many people are you shopping for?" },
 ];
@@ -147,7 +147,7 @@ export default function UITestPage() {
           transform: titleVisible ? "translateY(0)" : "translateY(15px)", 
         }}
       >
-        <h1 className="text-6xl font-black tracking-tighter text-foreground mb-2">ADI-I</h1>
+        <h1 className="text-6xl font-black tracking-tighter text-foreground mb-2">HoneyBear</h1>
         <p className="text-lg font-medium text-zinc-500 italic">Your AI food resource assistant</p>
       </div>
 

@@ -25,12 +25,37 @@ const NUTRITION_PROFILES: Record<string, string> = {
   specialty: "diverse cultural ingredients for varied cuisine",
 };
 
+interface ResolvedLocation {
+  address: string;
+  lat: number;
+  lng: number;
+  zip?: string;
+}
+
+async function geocode(address: string, key: string): Promise<ResolvedLocation | null> {
+  const acRes = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?${new URLSearchParams({ input: address, key })}`);
+  if (!acRes.ok) return null;
+  const acData = await acRes.json();
+  if (acData.status !== "OK" || !acData.predictions?.length) return null;
+  const placeId = acData.predictions[0].place_id as string;
+
+  const detailRes = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?${new URLSearchParams({ place_id: placeId, fields: "geometry,formatted_address,address_components", key })}`);
+  if (!detailRes.ok) return null;
+  const detailData = await detailRes.json();
+  if (detailData.status !== "OK") return null;
+
+  const { lat, lng } = detailData.result.geometry.location;
+  const zipComp = detailData.result.address_components?.find((c: { types: string[] }) => c.types.includes("postal_code"));
+  return { address: detailData.result.formatted_address, lat, lng, zip: zipComp?.short_name };
+}
+
 export async function POST(req: Request) {
   try {
-    const { messages, coupons, basket, profile } = await req.json();
+    const { messages, coupons, basket, profile, location } = await req.json();
     const list = (coupons as Coupon[]).slice(0, 150);
     const basketItems = (basket as Coupon[] | undefined) ?? [];
     const userProfile = (profile as UserProfile | undefined) ?? {};
+    const userLocation = location as ResolvedLocation | null | undefined;
 
     // Build coupon list grouped by category
     const byCat = new Map<string, string[]>();
@@ -60,6 +85,12 @@ export async function POST(req: Request) {
       : "USER PROFILE:\n- No profile set yet";
 
     const missingProfile = !userProfile.people || !userProfile.budget || !userProfile.car;
+    const hasLocation = !!userLocation?.address;
+
+    // Location section
+    const locationContext = hasLocation
+      ? `LOCATION: ${userLocation!.address}`
+      : "LOCATION: Not set yet";
 
     // Basket section
     const basketTotal = basketItems.reduce((s: number, c: Coupon) => s + (c.couponPrice ?? 0), 0);
@@ -67,12 +98,10 @@ export async function POST(req: Request) {
       ? `CURRENT BASKET (${basketItems.length} items, ~$${basketTotal.toFixed(2)}):\n${basketItems.map((c: Coupon) => `  • ${c.item} $${(c.couponPrice ?? 0).toFixed(2)} [${c.category ?? "?"}]`).join("\n")}`
       : "CURRENT BASKET:\n  (empty — user hasn't added anything yet)";
 
-    const hasDeals = list.length > 0;
-
-    const systemPrompt = `You are ADI-I, a warm and knowledgeable grocery shopping assistant. You help users find food resources, plan meals on a budget, and discover local grocery deals.
-${!hasDeals ? `\nNo deals are loaded yet (the user likely hasn't set their location). Introduce yourself warmly, then ask for their profile info (people, budget, car) naturally. After collecting their profile, suggest they set their location in the top navigation bar to unlock local deals and the AI basket feature.` : ""}
+    const systemPrompt = `You are HoneyBear, a warm and knowledgeable grocery shopping assistant. You help users find food resources, plan meals on a budget, and discover local grocery deals.
 
 ═══════════════════════════════
+${locationContext}
 ${profileContext}
 
 ${basketContext}
@@ -94,9 +123,12 @@ YOUR ROLE:
 - Be warm, practical, and concise. No fluff.
 - If the user mentions dietary needs (vegetarian, gluten-free, etc.) — adjust immediately
 
-PROFILE COLLECTION:
-${missingProfile ? `- The user is MISSING profile info. Ask for ONE missing field at a time — do NOT bundle all questions together.${!userProfile.people ? "\n- First, ask how many people they're shopping for." : !userProfile.budget ? "\n- Next, ask what their weekly grocery budget is." : "\n- Finally, ask if they have a car to visit multiple stores."}` : "- Profile is complete."}
-- When the user tells you their household size, budget, or transportation — call saveProfile immediately with those values.
+ONBOARDING (ask ONE question at a time, never bundle):
+${!hasLocation ? "- Location is NOT set. Ask for their full address (e.g. 123 Main St, Chicago, IL)." : "- Location is set \u2713"}
+${hasLocation && missingProfile ? `- Profile incomplete. ${!userProfile.people ? "Ask how many people they're shopping for." : !userProfile.budget ? "Ask their weekly grocery budget." : "Ask if they have a car to visit multiple stores."}` : ""}
+${hasLocation && !missingProfile ? "- All set! Ready to help with deals and meal planning." : ""}
+- When the user provides their location/address — call setLocation immediately.
+- When the user tells you their household size, budget, or transportation — call saveProfile immediately.
 
 BASKET BUILDING:
 - When the user asks you to build, suggest, or auto-fill a basket — call suggestBasket with 5-10 items.
@@ -120,6 +152,19 @@ BUDGET MATH RULES (follow strictly):
       system: systemPrompt,
       messages: await convertToModelMessages(messages),
       tools: {
+        setLocation: {
+          description: "Geocode the user's address and set their location for finding local deals",
+          inputSchema: z.object({
+            address: z.string().describe("The user's city, zip code, or full address"),
+          }),
+          execute: async ({ address }) => {
+            const key = process.env.GOOGLE_PLACES_API_KEY;
+            if (!key) return { error: "Geocoding unavailable" };
+            const loc = await geocode(address, key);
+            if (!loc) return { error: "Could not find that address" };
+            return loc;
+          },
+        },
         saveProfile: {
           description: "Save the user's profile: household size, weekly budget, and whether they have a car",
           inputSchema: z.object({

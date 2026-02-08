@@ -20,7 +20,11 @@ export default function Home() {
           transform: visible ? "translateY(0)" : "translateY(15px)",
         }}
       >
-        <h1 className="text-6xl font-black tracking-tighter text-foreground mb-2">ADI-I</h1>
+        <h1 className="text-6xl font-black tracking-tighter text-foreground mb-2 leading-[0.9]">
+          HUNT THE DEALS,
+          <br /> 
+          KEEP THE HONEY.
+        </h1>
         <p className="text-lg font-medium text-zinc-500 italic">Your AI food resource assistant</p>
       </div>
 

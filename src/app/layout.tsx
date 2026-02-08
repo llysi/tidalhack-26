@@ -12,7 +12,7 @@ const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"] });
 const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ADI-I",
+  title: "HoneyBear",
   description: "Find food pantries, affordable groceries, and meal programs near you.",
 };
 
