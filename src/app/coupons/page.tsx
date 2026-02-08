@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import type { Coupon } from "@/lib/coupons/types";
 import { useLocation } from "@/contexts/LocationContext";
+import CouponChat from "@/components/CouponChat";
 
 // Module-level cache — survives tab switches within the same session
 const couponCache = new Map<string, Coupon[]>();
@@ -143,6 +144,9 @@ export default function CouponsPage() {
           {search ? `No deals matching "${search}".` : "No deals found for this store."}
         </p>
       )}
+
+      {/* AI Basket side panel — renders its own fixed button + panel */}
+      {coupons.length > 0 && <CouponChat coupons={coupons} />}
 
       {/* Coupon list */}
       <ul className="space-y-2">
