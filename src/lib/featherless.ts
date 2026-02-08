@@ -8,6 +8,7 @@ export const featherless = createOpenAICompatible({
   apiKey: process.env.FEATHERLESS_API_KEY,
 });
 
-// Default model — Llama 3.1 70B Instruct
-// TODO: Confirm the exact model ID available on your Featherless account.
-export const defaultModel = featherless("meta-llama/Meta-Llama-3.1-70B-Instruct");
+// Change this to switch models. Use any model ID from https://featherless.ai/models
+export const MODEL_ID = "Qwen/Qwen2.5-72B-Instruct";
+
+export const defaultModel = featherless(MODEL_ID);
