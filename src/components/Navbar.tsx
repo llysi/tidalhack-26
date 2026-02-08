@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { useLocation, geocodeAddress, RADIUS_OPTIONS } from "@/contexts/LocationContext";
 
+// Removed the Home tab from the links array
 const links = [
-  { href: "/", label: "Home" },
   { href: "/coupons", label: "Coupons" },
   { href: "/pantries", label: "Pantries" },
 ];
@@ -38,7 +38,6 @@ export default function Navbar() {
     setActiveSuggestion(-1);
   }
 
-  // Debounced autocomplete fetch
   useEffect(() => {
     if (!editing) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -69,7 +68,6 @@ export default function Navbar() {
   async function commitEdit() {
     if (geocoding) return;
     if (!draft.trim()) { closeEdit(); return; }
-    // If there's an active suggestion, use it
     if (activeSuggestion >= 0 && suggestions[activeSuggestion]) {
       await selectSuggestion(suggestions[activeSuggestion]);
       return;
@@ -101,81 +99,91 @@ export default function Navbar() {
     : null;
 
   return (
-    <nav className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black px-6 py-3 flex items-center gap-6">
-      <span className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mr-4">
+    <nav className="sticky top-0 z-[100] w-full px-6 py-6 flex items-center gap-8 bg-transparent transition-all">
+      {/* Brand Logo - Navigates Home even though tab is gone */}
+      <Link href="/" className="text-2xl font-black tracking-tighter text-black hover:text-accent transition-colors">
         ADI-I
-      </span>
-      {links.map(({ href, label: linkLabel }) => (
-        <Link
-          key={href}
-          href={href}
-          className={`text-sm ${
-            pathname === href
-              ? "text-zinc-900 dark:text-zinc-100 font-medium"
-              : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-          }`}
-        >
-          {linkLabel}
-        </Link>
-      ))}
-
-      {/* Radius selector */}
-      <div className="ml-auto flex items-center gap-2">
-        <select
-          value={radius}
-          onChange={(e) => setRadius(Number(e.target.value) as typeof RADIUS_OPTIONS[number])}
-          className="text-xs text-zinc-500 dark:text-zinc-400 bg-transparent border border-zinc-200 dark:border-zinc-700 rounded px-1.5 py-0.5 focus:outline-none cursor-pointer"
-        >
-          {RADIUS_OPTIONS.map((r) => (
-            <option key={r} value={r}>{r} mi</option>
-          ))}
-        </select>
+      </Link>
+      
+      <div className="flex items-center gap-8">
+        {links.map(({ href, label: linkLabel }) => (
+          <Link
+            key={href}
+            href={href}
+            className={`text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 ${
+              pathname === href
+                ? "text-accent" 
+                : "text-black hover:text-accent"
+            }`}
+          >
+            {linkLabel}
+          </Link>
+        ))}
       </div>
 
-      {/* Location */}
-      <div className="flex items-center gap-2 relative">
-        {editing ? (
-          <div className="relative">
-            <form
-              onSubmit={(e) => { e.preventDefault(); commitEdit(); }}
-            >
-              <input
-                autoFocus
-                value={draft}
-                onChange={(e) => { setDraft(e.target.value); setActiveSuggestion(-1); }}
-                onKeyDown={handleKeyDown}
-                onBlur={() => setTimeout(closeEdit, 150)}
-                placeholder="Enter address..."
-                className="w-64 text-sm border border-zinc-300 dark:border-zinc-600 rounded px-2 py-0.5 bg-white dark:bg-zinc-900 focus:outline-none"
-              />
-            </form>
-            {suggestions.length > 0 && (
-              <ul className="absolute left-0 top-full mt-1 w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-50 overflow-hidden">
-                {suggestions.map((s, i) => (
-                  <li
-                    key={s.placeId}
-                    onMouseDown={() => selectSuggestion(s)}
-                    className={`px-3 py-2 text-sm cursor-pointer ${
-                      i === activeSuggestion
-                        ? "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
-                        : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                    }`}
-                  >
-                    {s.description}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ) : (
-          <button
-            onClick={startEdit}
-            disabled={geocoding}
-            className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+      <div className="ml-auto flex items-center gap-6">
+        <div className="flex items-center">
+          <select
+            value={radius}
+            onChange={(e) => setRadius(Number(e.target.value) as typeof RADIUS_OPTIONS[number])}
+            className="text-[10px] font-black uppercase tracking-widest text-black bg-transparent border-none focus:outline-none cursor-pointer hover:text-accent transition-colors appearance-none"
           >
-            {geocoding ? "Locating..." : label ? `📍 ${label}` : "📍 Set your address"}
-          </button>
-        )}
+            {RADIUS_OPTIONS.map((r) => (
+              <option key={r} value={r} className="text-black bg-white">{r} MILE RADIUS</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="relative flex items-center">
+          {editing ? (
+            <div className="relative">
+              <form onSubmit={(e) => { e.preventDefault(); commitEdit(); }}>
+                <input
+                  autoFocus
+                  value={draft}
+                  onChange={(e) => { setDraft(e.target.value); setActiveSuggestion(-1); }}
+                  onKeyDown={handleKeyDown}
+                  onBlur={() => setTimeout(closeEdit, 150)}
+                  placeholder="Enter address..."
+                  className="w-72 text-xs font-bold border-b-2 border-black bg-transparent px-1 py-2 focus:outline-none focus:border-accent transition-all text-black placeholder:text-zinc-400"
+                />
+              </form>
+              
+              {suggestions.length > 0 && (
+                <ul className="absolute right-0 top-full mt-2 w-80 bg-white border border-zinc-100 rounded-2xl shadow-2xl z-[110] overflow-hidden">
+                  {suggestions.map((s, i) => (
+                    <li
+                      key={s.placeId}
+                      onMouseDown={() => selectSuggestion(s)}
+                      className={`px-4 py-3 text-xs font-bold cursor-pointer transition-all border-b border-zinc-50 last:border-none ${
+                        i === activeSuggestion
+                          ? "bg-accent text-white"
+                          : "text-black hover:bg-accent hover:text-white"
+                      }`}
+                    >
+                      📍 {s.description}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={startEdit}
+              disabled={geocoding}
+              className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.15em] text-black hover:text-accent transition-all"
+            >
+              {geocoding ? (
+                 <span className="animate-pulse">Locating...</span>
+              ) : (
+                <>
+                  <span className="text-accent group-hover:text-black transition-colors">📍</span>
+                  {label ? label : "Set Address"}
+                </>
+              )}
+            </button>
+          )}
+        </div>
       </div>
     </nav>
   );
