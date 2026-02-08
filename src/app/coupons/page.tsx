@@ -4,29 +4,39 @@ import { useState, useEffect, useMemo } from "react";
 import type { Coupon } from "@/lib/coupons/types";
 import { useLocation } from "@/contexts/LocationContext";
 
+// Module-level cache — survives tab switches within the same session
+const couponCache = new Map<string, Coupon[]>();
+
 export default function CouponsPage() {
   const { location } = useLocation();
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const cacheKey = location ? `${location.zip},${location.lat},${location.lng}` : null;
+  const [coupons, setCoupons] = useState<Coupon[]>(() => (cacheKey ? couponCache.get(cacheKey) ?? [] : []));
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeStore, setActiveStore] = useState<string>("");
   const [search, setSearch] = useState("");
 
-  // Auto-search when location changes (set from navbar)
+  // Auto-search when location changes — skip if already cached
   useEffect(() => {
-    if (!location?.zip) return;
+    if (!location?.zip || !cacheKey) return;
+    if (couponCache.has(cacheKey)) {
+      setCoupons(couponCache.get(cacheKey)!);
+      return;
+    }
     setLoading(true);
     setErrors([]);
     fetch(`/api/coupons?zip=${encodeURIComponent(location.zip)}&lat=${location.lat}&lng=${location.lng}`)
       .then((r) => r.json())
       .then(({ coupons, errors }) => {
-        setCoupons(coupons ?? []);
+        const data = coupons ?? [];
+        couponCache.set(cacheKey, data);
+        setCoupons(data);
         setErrors(errors ?? []);
       })
       .catch((err) => setErrors([String(err)]))
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location ? `${location.lat},${location.lng},${location.zip}` : null]);
+  }, [cacheKey]);
 
   // Build dynamic store list from whatever came back
   const stores = useMemo(() => {
