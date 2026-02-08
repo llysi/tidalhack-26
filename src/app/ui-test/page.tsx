@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "@/contexts/LocationContext";
-// import ThemeSwitcher from "@/components/ThemeSwitcher";
 
 const SUGGESTIONS = [
   "I need help budgeting food for a family of 4",
@@ -47,26 +46,23 @@ export default function UITestPage() {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Address autocomplete state
   const [acSuggestions, setAcSuggestions] = useState<AutocompleteSuggestion[]>([]);
   const [geocoding, setGeocoding] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Staggered fade-ins
   useEffect(() => {
     const t1 = setTimeout(() => setTitleVisible(true), 150);
-    const t2 = setTimeout(() => setChatVisible(true), 800);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    const t2 = setTimeout(() => setChatVisible(true), 600);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
+  // Prevents the "jump" on load by checking message length
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, acSuggestions]);
+    if (messages.length > INITIAL_MESSAGES.length) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
-  // Debounced autocomplete when on address step
   useEffect(() => {
     if (step !== "address") return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -141,150 +137,108 @@ export default function UITestPage() {
     : "";
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ background: "var(--background)", color: "var(--foreground)" }}>
-      {/* <ThemeSwitcher /> */}
-      {/* Title */}
+    <div className="min-h-screen flex flex-col items-center justify-start px-6 pt-24 pb-12 bg-background text-foreground font-sans overflow-hidden">
+      
+      {/* Title Section */}
       <div
-        className="text-center mb-8"
+        className="text-center mb-8 transition-all duration-1000 ease-out"
         style={{
           opacity: titleVisible ? 1 : 0,
-          transform: titleVisible ? "translateY(0)" : "translateY(-12px)",
-          transition: "opacity 0.7s ease, transform 0.7s ease",
+          transform: titleVisible ? "translateY(0)" : "translateY(15px)", 
         }}
       >
-        <h1 className="text-5xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
-          ADI-I
-        </h1>
-        <p className="mt-3 text-lg" style={{ color: "var(--foreground)", opacity: 0.7 }}>
-          Your AI food resource assistant
-        </p>
+        <h1 className="text-6xl font-black tracking-tighter text-foreground mb-2">ADI-I</h1>
+        <p className="text-lg font-medium text-zinc-500 italic">Your AI food resource assistant</p>
       </div>
 
-      {/* Chat panel */}
+      {/* Chat Panel: max-w-4xl (Wider) and h-[460px] (Shorter) */}
       <div
-        className="w-full max-w-lg"
+        className="w-full max-w-4xl transition-all duration-1000 delay-300"
         style={{
           opacity: chatVisible ? 1 : 0,
-          transform: chatVisible ? "translateY(0)" : "translateY(16px)",
-          transition: "opacity 0.7s ease, transform 0.7s ease",
+          transform: chatVisible ? "translateY(0)" : "translateY(25px)",
         }}
       >
-        <div className="border rounded-2xl shadow-xl overflow-hidden flex flex-col h-[520px]" style={{ background: "var(--background)", borderColor: "color-mix(in srgb, var(--foreground) 15%, transparent)" }}>
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="bg-white/70 backdrop-blur-xl border-2 border-zinc-100 rounded-[2.5rem] shadow-2xl shadow-zinc-200/50 flex flex-col h-[460px] overflow-hidden">
+          
+          <div className="flex-1 overflow-y-auto p-8 space-y-4 custom-scrollbar">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className="max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
-                  style={
+                  className={`max-w-[75%] rounded-[1.5rem] px-6 py-3 text-sm font-medium leading-relaxed shadow-sm ${
                     msg.role === "user"
-                      ? { background: "var(--accent)", color: "var(--accent-fg)" }
-                      : { background: "color-mix(in srgb, var(--foreground) 8%, transparent)", color: "var(--foreground)" }
-                  }
+                      ? "bg-gradient-to-br from-foreground to-zinc-800 text-background"
+                      : "bg-gradient-to-br from-zinc-100/60 to-zinc-200/60 text-foreground border border-white/40"
+                  }`}
                 >
                   {msg.text}
                 </div>
               </div>
             ))}
 
-            {/* Yes/No buttons for car step */}
             {step === "car" && (
-              <div className="flex gap-2 pl-1 pt-1">
+              <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => handleCar(true)}
-                  className="px-4 py-2 rounded-full text-sm font-medium transition"
-                  style={{ background: "color-mix(in srgb, var(--accent) 15%, transparent)", color: "var(--foreground)" }}
-                >
-                  Yes
-                </button>
+                  className="px-8 py-2.5 rounded-full text-xs font-black uppercase tracking-widest bg-accent text-accent-fg hover:scale-105 transition-all shadow-md"
+                > Yes </button>
                 <button
                   onClick={() => handleCar(false)}
-                  className="px-4 py-2 rounded-full text-sm font-medium transition"
-                  style={{ background: "color-mix(in srgb, var(--foreground) 8%, transparent)", color: "var(--foreground)" }}
-                >
-                  No
-                </button>
-              </div>
-            )}
-
-            {/* Address autocomplete suggestions */}
-            {step === "address" && acSuggestions.length > 0 && (
-              <div className="space-y-1 pl-1">
-                {acSuggestions.map((s) => (
-                  <button
-                    key={s.placeId}
-                    onClick={() => selectAddress(s)}
-                    className="block w-full text-left px-3 py-2 rounded-xl text-sm transition"
-                    style={{ background: "color-mix(in srgb, var(--foreground) 5%, transparent)", color: "var(--foreground)" }}
-                  >
-                    {s.description}
-                  </button>
-                ))}
+                  className="px-8 py-2.5 rounded-full text-xs font-black uppercase tracking-widest bg-zinc-200/50 text-foreground hover:bg-zinc-200 transition-all backdrop-blur-sm"
+                > No </button>
               </div>
             )}
 
             {geocoding && (
-              <p className="text-xs pl-1" style={{ color: "var(--foreground)", opacity: 0.5 }}>Locating…</p>
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase text-zinc-400">
+                <span className="w-1.5 h-1.5 bg-accent rounded-full animate-ping" /> Locating...
+              </div>
             )}
-
             <div ref={bottomRef} />
           </div>
 
-          {/* Scrolling suggestion chips */}
+          {/* Bottom Area: Dropdown autocomplete + Shorter Input */}
           {step !== "done" && step !== "car" && (
-            <div className="overflow-hidden py-2" style={{ borderTop: "1px solid color-mix(in srgb, var(--foreground) 10%, transparent)" }}>
-              <div
-                className="flex gap-2 w-max"
-                style={{ animation: "marquee 28s linear infinite" }}
-              >
-                {[...SUGGESTIONS, ...SUGGESTIONS].map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleSubmit(s)}
-                    className="shrink-0 px-3 py-1.5 rounded-full text-xs transition"
-                    style={{ background: "color-mix(in srgb, var(--foreground) 8%, transparent)", color: "var(--foreground)" }}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+            <div className="relative p-3 bg-white/40 backdrop-blur-2xl border-t border-zinc-100">
+              
+              {/* Dropdown Style Autocomplete */}
+              {step === "address" && acSuggestions.length > 0 && (
+                <div className="absolute bottom-full left-3 right-3 mb-2 bg-white/95 backdrop-blur-2xl border border-zinc-100 rounded-2xl shadow-2xl overflow-hidden z-50 max-h-40 overflow-y-auto custom-scrollbar">
+                  {acSuggestions.map((s) => (
+                    <button
+                      key={s.placeId}
+                      onClick={() => selectAddress(s)}
+                      className="block w-full text-left px-5 py-3 text-xs font-bold border-b border-zinc-50 last:border-none hover:bg-accent hover:text-accent-fg transition-all text-foreground"
+                    >
+                      <span className="mr-2 opacity-50">📍</span> {s.description}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-          {/* Input area */}
-          {step !== "done" && step !== "car" && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (step === "address" && acSuggestions.length > 0) {
-                  selectAddress(acSuggestions[0]);
-                } else {
-                  handleSubmit();
-                }
-              }}
-              className="flex gap-2 p-3"
-              style={{ borderTop: "1px solid color-mix(in srgb, var(--foreground) 10%, transparent)" }}
-            >
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={placeholder}
-                className="flex-1 rounded-full px-4 py-2 text-sm focus:outline-none"
-                style={{
-                  background: "color-mix(in srgb, var(--foreground) 6%, transparent)",
-                  border: "1px solid color-mix(in srgb, var(--foreground) 15%, transparent)",
-                  color: "var(--foreground)",
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (step === "address" && acSuggestions.length > 0) selectAddress(acSuggestions[0]);
+                  else handleSubmit();
                 }}
-              />
-              <button
-                type="submit"
-                disabled={!input.trim()}
-                className="rounded-full px-4 py-2 text-sm transition disabled:opacity-40"
-                style={{ background: "var(--accent)", color: "var(--accent-fg)" }}
+                className="flex gap-2"
               >
-                →
-              </button>
-            </form>
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={placeholder}
+                  className="flex-1 rounded-xl px-5 py-2.5 text-sm font-medium bg-zinc-100/50 border-2 border-transparent focus:border-accent focus:bg-white transition-all outline-none text-foreground placeholder:text-zinc-400"
+                />
+                <button
+                  type="submit"
+                  disabled={!input.trim()}
+                  className="bg-accent text-accent-fg px-6 rounded-xl flex items-center justify-center font-black shadow-lg shadow-accent/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-20"
+                >
+                  <span className="text-lg">→</span>
+                </button>
+              </form>
+            </div>
           )}
         </div>
       </div>
