@@ -1,12 +1,13 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useLocation } from "@/contexts/LocationContext";
 
 export default function BudgetChatbot(): JSX.Element {
+  const { location } = useLocation();
   const [open, setOpen] = useState(false);
   const [people, setPeople] = useState<number | null>(null);
   const [budget, setBudget] = useState<string | null>(null);
-  const [car, setCar] = useState<boolean | null>(null);
-  const [step, setStep] = useState<"people" | "budget" | "car">("people");
+  const [car, setCar] = useState<boolean | null>(null);  const [address, setAddress] = useState<string | null>(null);  const [step, setStep] = useState<"people" | "budget" | "car" | "address">("people");
   const [input, setInput] = useState("");
 
   useEffect(() => {
@@ -14,10 +15,12 @@ export default function BudgetChatbot(): JSX.Element {
       const storedBudget = localStorage.getItem("user_budget");
       const storedPeople = localStorage.getItem("user_people");
       const storedCar = localStorage.getItem("user_car");
+      const storedAddress = localStorage.getItem("user_address");
       if (storedBudget) setBudget(storedBudget);
       if (storedPeople) setPeople(Number.parseInt(storedPeople, 10) || null);
       if (storedCar === "yes") setCar(true);
       if (storedCar === "no") setCar(false);
+      if (storedAddress) setAddress(storedAddress);
     } catch (e) {
       // ignore in non-browser environments
     }
@@ -51,6 +54,18 @@ export default function BudgetChatbot(): JSX.Element {
       localStorage.setItem("user_car", hasCar ? "yes" : "no");
       setCar(hasCar);
     } catch (e) {}
+    setInput("");
+    setStep("address");
+  }
+
+  function saveAddress() {
+    const val = input.trim();
+    if (!val) return;
+    try {
+      localStorage.setItem("user_address", val);
+      setAddress(val);
+    } catch (e) {}
+    setInput("");
     setOpen(false);
   }
 
@@ -59,10 +74,12 @@ export default function BudgetChatbot(): JSX.Element {
       localStorage.removeItem("user_budget");
       localStorage.removeItem("user_people");
       localStorage.removeItem("user_car");
+      localStorage.removeItem("user_address");
     } catch (e) {}
     setBudget(null);
     setPeople(null);
     setCar(null);
+    setAddress(null);
     setInput("");
     setStep("people");
     setOpen(true);
@@ -74,6 +91,7 @@ export default function BudgetChatbot(): JSX.Element {
         localStorage.removeItem("user_budget");
         localStorage.removeItem("user_people");
         localStorage.removeItem("user_car");
+        localStorage.removeItem("user_address");
       } catch (e) {}
     }
 
@@ -123,13 +141,7 @@ export default function BudgetChatbot(): JSX.Element {
               fontWeight: 600,
             }}
           >
-            {people && budget
-              ? `People: ${people} • Budget: ${budget}`
-              : budget
-              ? `Budget: ${budget}`
-              : people
-              ? `People: ${people}`
-              : "Start"}
+            {address ? "Generating meal plan..." : "begin"}
           </button>
         </div>
       )}
@@ -299,7 +311,7 @@ export default function BudgetChatbot(): JSX.Element {
                   </button>
                 </div>
               </>
-            ) : (
+            ) : step === "car" ? (
               <>
                 <p style={{ margin: "0 0 12px 0", color: "#374151" }}>
                   Do you have access to a car?
@@ -360,6 +372,70 @@ export default function BudgetChatbot(): JSX.Element {
                     }}
                   >
                     Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p style={{ margin: "0 0 12px 0", color: "#374151" }}>
+                  What is your address?
+                </p>
+
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveAddress();
+                  }}
+                  placeholder={address ?? "Enter your address"}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #e5e7eb",
+                    marginBottom: 12,
+                  }}
+                />
+
+                <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                  <button
+                    onClick={() => setStep("car")}
+                    style={{
+                      background: "transparent",
+                      border: "1px solid #e5e7eb",
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Back
+                  </button>
+
+                  <button
+                    onClick={() => setOpen(false)}
+                    style={{
+                      background: "transparent",
+                      border: "1px solid #e5e7eb",
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={saveAddress}
+                    style={{
+                      background: "#10b981",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Save
                   </button>
                 </div>
               </>

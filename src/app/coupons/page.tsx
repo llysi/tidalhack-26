@@ -25,7 +25,17 @@ export default function CouponsPage() {
     }
     setLoading(true);
     setErrors([]);
-    fetch(`/api/coupons?zip=${encodeURIComponent(location.zip)}&lat=${location.lat}&lng=${location.lng}`)
+    
+    // Build query string - use zip if available, otherwise use coordinates
+    const params = new URLSearchParams({
+      lat: String(location.lat),
+      lng: String(location.lng),
+    });
+    if (location.zip) {
+      params.append('zip', location.zip);
+    }
+    
+    fetch(`/api/coupons?${params}`)
       .then((r) => r.json())
       .then(({ coupons, errors }) => {
         const data = coupons ?? [];
