@@ -1,99 +1,98 @@
 "use client";
 
-import { useState } from "react";
-import type { Coupon, StoreId } from "@/lib/coupons/types";
-
-const STORES: { id: StoreId; label: string }[] = [
-  { id: "heb", label: "H-E-B" },
-  { id: "aldi", label: "Aldi" },
-  { id: "walmart", label: "Walmart" },
-];
+import { useState, useEffect, useMemo } from "react";
+import type { Coupon } from "@/lib/coupons/types";
+import { useLocation } from "@/contexts/LocationContext";
 
 export default function CouponsPage() {
-  const [zip, setZip] = useState("");
+  const { location } = useLocation();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeStore, setActiveStore] = useState<StoreId>("heb");
+  const [activeStore, setActiveStore] = useState<string>("");
 
-  async function handleSearch(e: React.SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!zip.trim()) return;
+  // Auto-search when location changes (set from navbar)
+  useEffect(() => {
+    if (!location?.zip) return;
     setLoading(true);
     setErrors([]);
-    try {
-      const res = await fetch(`/api/coupons?zip=${encodeURIComponent(zip)}`);
-      const data = await res.json();
-      setCoupons(data.coupons ?? []);
-      setErrors(data.errors ?? []);
-    } catch (err) {
-      setErrors([String(err)]);
-    } finally {
-      setLoading(false);
+    fetch(`/api/coupons?zip=${encodeURIComponent(location.zip)}&lat=${location.lat}&lng=${location.lng}`)
+      .then((r) => r.json())
+      .then(({ coupons, errors }) => {
+        setCoupons(coupons ?? []);
+        setErrors(errors ?? []);
+      })
+      .catch((err) => setErrors([String(err)]))
+      .finally(() => setLoading(false));
+  }, [location?.zip]);
+
+  // Build dynamic store list from whatever came back
+  const stores = useMemo(() => {
+    const seen = new Map<string, number>();
+    for (const c of coupons) {
+      seen.set(c.store, (seen.get(c.store) ?? 0) + 1);
     }
-  }
+    return Array.from(seen.entries()).map(([id, count]) => ({ id, count }));
+  }, [coupons]);
+
+  // Auto-select first store when data loads
+  useEffect(() => {
+    if (stores.length > 0 && !stores.find((s) => s.id === activeStore)) {
+      setActiveStore(stores[0].id);
+    }
+  }, [stores, activeStore]);
 
   const filtered = coupons.filter((c) => c.store === activeStore);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
-      <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+      <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
         Grocery Deals
       </h1>
-
-      {/* Zip input */}
-      <form onSubmit={handleSearch} className="flex gap-2 mb-6">
-        <input
-          value={zip}
-          onChange={(e) => setZip(e.target.value)}
-          placeholder="Enter zip code..."
-          className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button
-          type="submit"
-          disabled={loading || !zip.trim()}
-          className="rounded-full bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? "Loading..." : "Search"}
-        </button>
-      </form>
-
-      {/* Store tabs */}
-      {coupons.length > 0 && (
-        <div className="flex gap-2 mb-4">
-          {STORES.map(({ id, label }) => {
-            const count = coupons.filter((c) => c.store === id).length;
-            return (
-              <button
-                key={id}
-                onClick={() => setActiveStore(id)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
-                  activeStore === id
-                    ? "bg-blue-600 text-white"
-                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                }`}
-              >
-                {label} {count > 0 && <span className="opacity-70">({count})</span>}
-              </button>
-            );
-          })}
-        </div>
+      {location ? (
+        <p className="text-sm text-zinc-400 mb-4">Near {location.address.split(",").slice(0, 2).join(",")} — edit in the nav bar</p>
+      ) : (
+        <p className="text-sm text-zinc-400 mb-4">Set your location in the nav bar to see local deals</p>
       )}
 
-      {/* Errors */}
-      {errors.length > 0 && (
-        <div className="mb-4 text-xs text-red-500 space-y-0.5">
-          {errors.map((e, i) => (
-            <p key={i}>{e}</p>
+      {/* Store tabs */}
+      {stores.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {stores.map(({ id, count }) => (
+            <button
+              key={id}
+              onClick={() => setActiveStore(id)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+                activeStore === id
+                  ? "bg-blue-600 text-white"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              }`}
+            >
+              {id} <span className="opacity-70">({count})</span>
+            </button>
           ))}
         </div>
       )}
 
-      {/* Coupon list */}
-      {!loading && coupons.length > 0 && filtered.length === 0 && (
+      {/* Status */}
+      {loading && <p className="text-zinc-400 text-sm">Loading deals...</p>}
+
+      {/* Errors */}
+      {errors.length > 0 && (
+        <div className="mb-4 text-xs text-red-500 space-y-0.5">
+          {errors.map((e, i) => <p key={i}>{e}</p>)}
+        </div>
+      )}
+
+      {!loading && location && coupons.length === 0 && !errors.length && (
+        <p className="text-zinc-400 text-sm">No deals found near you.</p>
+      )}
+
+      {!loading && location && coupons.length > 0 && filtered.length === 0 && (
         <p className="text-zinc-400 text-sm">No deals found for this store.</p>
       )}
 
+      {/* Coupon list */}
       <ul className="space-y-2">
         {filtered.map((coupon, i) => (
           <li
@@ -107,12 +106,20 @@ export default function CouponsPage() {
                 className="w-12 h-12 object-contain shrink-0 rounded"
               />
             )}
-            <span className="text-sm text-zinc-800 dark:text-zinc-200 flex-1">
-              {coupon.item}
-              {coupon.unit && (
-                <span className="text-zinc-400 ml-1 text-xs">({coupon.unit})</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-zinc-800 dark:text-zinc-200">
+                {coupon.item}
+                {coupon.unit && (
+                  <span className="text-zinc-400 ml-1 text-xs">({coupon.unit})</span>
+                )}
+              </p>
+              {(coupon.storeName || coupon.storeAddress) && (
+                <p className="text-xs text-zinc-400 truncate mt-0.5">
+                  {coupon.storeName}
+                  {coupon.storeAddress && ` · ${coupon.storeAddress}`}
+                </p>
               )}
-            </span>
+            </div>
             <div className="text-right shrink-0">
               {coupon.regularPrice != null && (
                 <span className="text-xs text-zinc-400 line-through mr-2">
