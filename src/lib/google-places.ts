@@ -6,6 +6,7 @@ export interface PlaceResult {
   phone?: string;
   hours?: string[];
   types?: string[];
+  photoName?: string;
   source: "google_places";
 }
 
@@ -33,7 +34,7 @@ export async function searchPlaces(
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask":
-          "places.displayName,places.formattedAddress,places.location,places.nationalPhoneNumber,places.regularOpeningHours,places.types",
+          "places.displayName,places.formattedAddress,places.location,places.nationalPhoneNumber,places.regularOpeningHours,places.types,places.photos",
       },
       body: JSON.stringify({
         textQuery: query,
@@ -64,6 +65,7 @@ export async function searchPlaces(
       nationalPhoneNumber?: string;
       regularOpeningHours?: { weekdayDescriptions?: string[] };
       types?: string[];
+      photos?: { name?: string }[];
     }): PlaceResult => ({
       name: place.displayName?.text ?? "Unknown",
       address: place.formattedAddress ?? "",
@@ -72,7 +74,34 @@ export async function searchPlaces(
       phone: place.nationalPhoneNumber,
       hours: place.regularOpeningHours?.weekdayDescriptions,
       types: place.types,
+      photoName: place.photos?.[0]?.name,
       source: "google_places",
     })
   );
+}
+
+/**
+ * Look up a photo name for a place by searching its name + address.
+ * Returns undefined if no photo is found or the API key is missing.
+ */
+export async function lookupPlacePhotoName(
+  name: string,
+  address: string
+): Promise<string | undefined> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) return undefined;
+
+  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": "places.photos",
+    },
+    body: JSON.stringify({ textQuery: `${name} ${address}`, maxResultCount: 1 }),
+  });
+
+  if (!res.ok) return undefined;
+  const data = await res.json();
+  return data.places?.[0]?.photos?.[0]?.name;
 }

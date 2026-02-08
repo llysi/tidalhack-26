@@ -6,6 +6,7 @@ export interface SnapRetailer {
   city: string;
   state: string;
   zip: string;
+  photoName?: string;
   source: "usda_snap";
 }
 
