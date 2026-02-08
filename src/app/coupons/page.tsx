@@ -10,27 +10,34 @@ import BasketPanel from "@/components/BasketPanel";
 import { useBasket } from "@/contexts/BasketContext";
 
 const couponCache = new Map<string, Coupon[]>();
+// Separate cache for the AI-specific context to ensure persistence
+const aiMenuCache = new Map<string, any[]>();
 
 export default function CouponsPage() {
   const { location } = useLocation();
   const { addItem } = useBasket();
   const cacheKey = location ? `${location.zip},${location.lat},${location.lng}` : null;
+  
   const [coupons, setCoupons] = useState<Coupon[]>(() => (cacheKey ? couponCache.get(cacheKey) ?? [] : []));
+  const [aiMenu, setAiMenu] = useState<any[]>(() => (cacheKey ? aiMenuCache.get(cacheKey) ?? [] : []));
+  
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeStore, setActiveStore] = useState<string>("");
   const [search, setSearch] = useState("");
   const [snapStores, setSnapStores] = useState<SnapRetailer[]>([]);
   const [snapOnly, setSnapOnly] = useState(false);
-
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     if (!location?.zip || !cacheKey) return;
+    
     if (couponCache.has(cacheKey)) {
       setCoupons(couponCache.get(cacheKey)!);
+      setAiMenu(aiMenuCache.get(cacheKey) ?? []);
       return;
     }
+
     setLoading(true);
     setErrors([]);
     
@@ -42,10 +49,17 @@ export default function CouponsPage() {
     
     fetch(`/api/coupons?${params}`)
       .then((r) => r.json())
-      .then(({ coupons, errors }) => {
+      .then(({ coupons, aiContext, errors }) => {
         const data = coupons ?? [];
+        const menu = aiContext ?? [];
+        
+        // Update Caches
         couponCache.set(cacheKey, data);
+        aiMenuCache.set(cacheKey, menu);
+        
+        // Update State
         setCoupons(data);
+        setAiMenu(menu);
         setErrors(errors ?? []);
       })
       .catch((err) => setErrors([String(err)]))
@@ -148,7 +162,6 @@ export default function CouponsPage() {
       </header>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
-        {/* Left: Map Sidebar - Made narrower (30%) to allow grid to breathe */}
         <aside className="w-full lg:w-[40%] lg:sticky lg:top-8 order-2 lg:order-1">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-xl font-black text-foreground uppercase tracking-tight">
@@ -176,7 +189,6 @@ export default function CouponsPage() {
           </div>
         </aside>
 
-        {/* Right: Search & Grid Coupon Feed - Made wider (70%) */}
         <main className="w-full lg:w-[60%] order-1 lg:order-2">
           <div className="sticky top-0 bg-background/95 backdrop-blur-md z-20 pb-6">
             <input
@@ -211,7 +223,6 @@ export default function CouponsPage() {
             </div>
           )}
 
-          {/* GRID: 3 columns on desktop, 2 on tablet, 1 on mobile */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map((coupon, i) => (
               <div 
@@ -219,70 +230,48 @@ export default function CouponsPage() {
                 onClick={() => handleFocusStore(coupon.store)}
                 className="group flex flex-col p-4 bg-white border border-zinc-100 rounded-[1.5rem] hover:border-accent/30 hover:shadow-xl transition-all duration-300 cursor-pointer active:scale-[0.98]"
               >
-                {/* Top Section: Image and Price */}
                 <div className="relative w-full aspect-square bg-zinc-50 rounded-2xl mb-4 flex items-center justify-center p-4 border border-zinc-50 group-hover:bg-white transition-colors overflow-hidden">
                   {coupon.imageUrl ? (
                     <img src={coupon.imageUrl} alt="" className="max-w-full max-h-full object-contain" />
                   ) : (
                     <span className="text-4xl grayscale opacity-20">🛒</span>
                   )}
-                  
-                  {/* Price Badge Overlay */}
                   <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-xl shadow-sm border border-zinc-100">
                     <p className="font-black text-accent text-base leading-none">
                       ${coupon.couponPrice?.toFixed(2)}
                     </p>
-                    {coupon.regularPrice && (
-                      <p className="text-[9px] text-zinc-400 line-through text-right">
-                        ${coupon.regularPrice.toFixed(2)}
-                      </p>
-                    )}
                   </div>
                 </div>
 
-                {/* Bottom Section: Details */}
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
                     <h3 className="font-bold text-sm leading-tight text-foreground group-hover:text-accent transition-colors line-clamp-2 mb-2">
                       {coupon.item}
                     </h3>
                   </div>
-                  
                   <div className="flex items-center justify-between pt-2 border-t border-zinc-50">
                     <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest truncate max-w-[50%]">
                       {coupon.storeName}
                     </p>
-                    <div className="flex items-center gap-1.5">
-                      {coupon.snapEligible && (
-                        <span className="bg-accent/10 text-accent text-[8px] font-black px-2 py-0.5 rounded-md border border-accent/20">
-                          SNAP
-                        </span>
-                      )}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); addItem(coupon); }}
-                        className="text-[11px] font-black w-6 h-6 rounded-full flex items-center justify-center transition hover:scale-110 active:scale-95"
-                        style={{ background: "var(--accent)", color: "var(--accent-fg)" }}
-                        title="Add to basket"
-                      >
-                        +
-                      </button>
-                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); addItem(coupon); }}
+                      className="text-[11px] font-black w-6 h-6 rounded-full flex items-center justify-center transition hover:scale-110 active:scale-95 bg-accent text-accent-fg"
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          
-          {filtered.length === 0 && (
-            <div className="text-center py-20 border-2 border-dashed border-zinc-200 rounded-[2rem]">
-              <p className="text-zinc-400 font-medium italic">No deals found for this selection.</p>
-            </div>
-          )}
         </main>
       </div>
 
       <BasketPanel />
-      {coupons.length > 0 && <CouponChat coupons={coupons} />}
+      {/* CRITICAL FIX: Passing the compact aiMenu which contains the {i, p, s} format 
+        that your HoneyBear POST route is now looking for.
+      */}
+      <CouponChat coupons={aiMenu} />
     </div>
   );
 }
