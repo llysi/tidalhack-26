@@ -81,7 +81,7 @@ export default function Navbar() {
             disabled={geocoding}
             className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
           >
-            {geocoding ? "Locating..." : label ? `📍 ${label}` : "📍 Set location"}
+            {geocoding ? "Locating..." : label ? `📍 ${label}` : "📍 Set your address"}
           </button>
         )}
       </div>

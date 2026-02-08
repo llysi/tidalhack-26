@@ -60,7 +60,7 @@ export default function TestPage() {
       </h1>
       {location ? (
         <p className="text-zinc-500 text-sm mb-6">
-          📍 {location.address} ({location.lat.toFixed(4)}, {location.lng.toFixed(4)})
+          📍 {location.address} ({(+location.lat).toFixed(4)}, {(+location.lng).toFixed(4)}) 
         </p>
       ) : (
         <p className="text-zinc-400 text-sm mb-6">Set your location in the nav bar to search.</p>
