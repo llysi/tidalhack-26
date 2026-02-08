@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "@/contexts/LocationContext";
 
 interface PlaceResult {
   name: string;
@@ -36,101 +37,54 @@ function distanceMiles(lat1: number, lng1: number, lat2: number, lng2: number): 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
-  const params = new URLSearchParams({ q: address, format: "json", limit: "1" });
-  const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
-    headers: { "User-Agent": "FoodResourceFinder/1.0" },
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  if (!data.length) return null;
-  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-}
-
 export default function TestPage() {
-  const [addressInput, setAddressInput] = useState("");
-  const [coords, setCoords] = useState<{ address: string; lat: number; lng: number } | null>(null);
-  const [geocoding, setGeocoding] = useState(false);
-  const [geocodeError, setGeocodeError] = useState("");
+  const { location } = useLocation();
   const [data, setData] = useState<TestData | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSearch(e: React.SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!addressInput.trim() || geocoding) return;
-    setGeocoding(true);
-    setGeocodeError("");
-    setData(null);
-    const result = await geocodeAddress(addressInput.trim());
-    setGeocoding(false);
-    if (!result) {
-      setGeocodeError("Address not found. Try a more specific address.");
-      return;
-    }
-    const resolved = { address: addressInput.trim(), ...result };
-    setCoords(resolved);
+  useEffect(() => {
+    if (!location) return;
     setLoading(true);
-    fetch(`/api/test-search?lat=${resolved.lat}&lng=${resolved.lng}`)
+    setData(null);
+    fetch(`/api/test-search?lat=${location.lat}&lng=${location.lng}`)
       .then((res) => res.json())
       .then((d) => setData(d))
       .catch((err) => setData({ places: [], snap: [], errors: [String(err)] }))
       .finally(() => setLoading(false));
-  }
+  }, [location?.lat, location?.lng]);
 
   return (
     <div className="min-h-screen bg-white dark:bg-black p-8 font-sans">
-      <h1 className="text-2xl font-bold mb-4 text-zinc-900 dark:text-zinc-100">
+      <h1 className="text-2xl font-bold mb-2 text-zinc-900 dark:text-zinc-100">
         API Test Page
       </h1>
-
-      <form onSubmit={handleSearch} className="flex gap-2 mb-2 max-w-lg">
-        <input
-          value={addressInput}
-          onChange={(e) => setAddressInput(e.target.value)}
-          placeholder="Enter an address or city..."
-          className="flex-1 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button
-          type="submit"
-          disabled={geocoding || !addressInput.trim()}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
-        >
-          {geocoding ? "Searching..." : "Search"}
-        </button>
-      </form>
-      {geocodeError && <p className="text-red-500 text-sm mb-4">{geocodeError}</p>}
-      {coords && (
+      {location ? (
         <p className="text-zinc-500 text-sm mb-6">
-          📍 {coords.address} ({coords.lat.toFixed(4)}, {coords.lng.toFixed(4)})
+          📍 {location.address} ({location.lat.toFixed(4)}, {location.lng.toFixed(4)})
         </p>
+      ) : (
+        <p className="text-zinc-400 text-sm mb-6">Set your location in the nav bar to search.</p>
       )}
 
       {loading && <p className="text-zinc-400">Loading...</p>}
 
       {data && data.errors.length > 0 && (
         <div className="mb-6 p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
-          <h2 className="font-semibold text-red-700 dark:text-red-400 mb-2">
-            Errors
-          </h2>
+          <h2 className="font-semibold text-red-700 dark:text-red-400 mb-2">Errors</h2>
           {data.errors.map((err, i) => (
-            <p key={i} className="text-red-600 dark:text-red-400 text-sm">
-              {err}
-            </p>
+            <p key={i} className="text-red-600 dark:text-red-400 text-sm">{err}</p>
           ))}
         </div>
       )}
 
       {data && (
         <div className="space-y-8">
-          {/* Google Places results */}
           <section>
             <h2 className="text-lg font-semibold mb-3 text-zinc-900 dark:text-zinc-100">
               Google Places Results ({data.places.length})
             </h2>
             {data.places.length === 0 ? (
-              <p className="text-zinc-400 text-sm">
-                No results (is GOOGLE_PLACES_API_KEY set in .env.local?)
-              </p>
+              <p className="text-zinc-400 text-sm">No results (is GOOGLE_PLACES_API_KEY set in .env.local?)</p>
             ) : (
               <table className="w-full text-sm border-collapse">
                 <thead>
@@ -144,10 +98,7 @@ export default function TestPage() {
                 </thead>
                 <tbody>
                   {data.places.map((p, i) => (
-                    <tr
-                      key={i}
-                      className="border-b border-zinc-100 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200"
-                    >
+                    <tr key={i} className="border-b border-zinc-100 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200">
                       <td className="py-2 pr-4 font-medium">
                         {p.photoName && (
                           <img
@@ -169,13 +120,11 @@ export default function TestPage() {
                       <td className="py-2 pr-4">{p.phone ?? "—"}</td>
                       <td className="py-2 pr-4 text-xs">
                         {p.hours?.length ? (
-                          <ul className="space-y-0.5">
-                            {p.hours.map((h, j) => <li key={j}>{h}</li>)}
-                          </ul>
+                          <ul className="space-y-0.5">{p.hours.map((h, j) => <li key={j}>{h}</li>)}</ul>
                         ) : "—"}
                       </td>
                       <td className="py-2 pr-4 text-zinc-500">
-                        {coords ? `${distanceMiles(coords.lat, coords.lng, p.lat, p.lng).toFixed(1)} mi` : "—"}
+                        {location ? `${distanceMiles(location.lat, location.lng, p.lat, p.lng).toFixed(1)} mi` : "—"}
                       </td>
                     </tr>
                   ))}
@@ -184,7 +133,6 @@ export default function TestPage() {
             )}
           </section>
 
-          {/* USDA SNAP results */}
           <section>
             <h2 className="text-lg font-semibold mb-3 text-zinc-900 dark:text-zinc-100">
               USDA SNAP Retailers ({data.snap.length})
@@ -202,10 +150,7 @@ export default function TestPage() {
                 </thead>
                 <tbody>
                   {data.snap.map((s, i) => (
-                    <tr
-                      key={i}
-                      className="border-b border-zinc-100 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200"
-                    >
+                    <tr key={i} className="border-b border-zinc-100 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200">
                       <td className="py-2 pr-4 font-medium">
                         {s.photoName && (
                           <img
@@ -225,7 +170,7 @@ export default function TestPage() {
                       </td>
                       <td className="py-2 pr-4">{s.address}</td>
                       <td className="py-2 pr-4 text-zinc-500">
-                        {coords ? `${distanceMiles(coords.lat, coords.lng, s.lat, s.lng).toFixed(1)} mi` : "—"}
+                        {location ? `${distanceMiles(location.lat, location.lng, s.lat, s.lng).toFixed(1)} mi` : "—"}
                       </td>
                     </tr>
                   ))}
