@@ -23,6 +23,21 @@ const HEADERS = {
   Referer: "https://flipp.com/",
 };
 
+// Keywords that indicate non-food items to filter out
+const NON_FOOD_KEYWORDS = [
+  "candle", "wax melt", "detergent", "laundry", "bleach", "trash bag",
+  "paper towel", "toilet paper", "tissue", "shampoo", "conditioner",
+  "toothbrush", "toothpaste", "deodorant", "razor", "vitamin", "supplement",
+  "medicine", "battery", "electronics", "shirt", "pant", "shoe", "toy",
+  "book", "magazine", "greeting card", "gift card", "flower pot",
+  "lawn", "hardware", "disinfect", "sponge",
+];
+
+function isFoodItem(name: string): boolean {
+  const lower = name.toLowerCase();
+  return !NON_FOOD_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
 // Keywords that identify grocery / food stores (case-insensitive)
 const GROCERY_KEYWORDS = [
   "grocery", "supermarket", "market", "food", "farm", "kroger", "aldi",
@@ -43,13 +58,14 @@ function parseItem(i: Record<string, unknown>, fallbackMerchant = ""): Coupon | 
   if (!merchant || !isGroceryStore(merchant)) return null;
 
   const name = (i.name ?? i.description) as string | undefined;
-  if (!name) return null;
+  if (!name || !isFoodItem(name)) return null;
 
   const salePrice = (i.current_price ?? i.sale_price ?? i.price) as number | undefined;
   const regular = (i.pre_price ?? i.original_price ?? i.regular_price) as number | undefined;
 
   return {
     store: merchant,
+    itemId: i.id as number | undefined,
     item: name,
     regularPrice: regular,
     couponPrice: salePrice,
@@ -71,12 +87,13 @@ async function fetchFlyerItems(flyerId: number, merchantName: string): Promise<C
     return items.flatMap((item) => {
       const i = item as Record<string, unknown>;
       const name = (i.name ?? i.short_name) as string | undefined;
-      if (!name) return [];
+      if (!name || !isFoodItem(name)) return [];
       // price is a string like "9.97" or empty
       const priceStr = i.price as string | undefined;
       const salePrice = priceStr ? parseFloat(priceStr) || undefined : undefined;
       const coupon: Coupon = {
         store: merchantName,
+        itemId: i.id as number | undefined,
         item: name,
         couponPrice: salePrice,
         expires: i.valid_to as string | undefined,
