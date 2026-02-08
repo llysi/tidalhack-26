@@ -40,6 +40,25 @@ export async function GET(req: Request) {
   try {
     let coupons = await fetchFlippCoupons(postalCode, query);
 
+    // Fetch sale_story from Flipp item detail API for "see store" items
+    await Promise.all(
+      coupons
+        .filter((c) => c.couponPrice == null && c.itemId)
+        .map(async (c) => {
+          try {
+            const res = await fetch(
+              `https://backflipp.wishabi.com/flipp/items/${c.itemId}`,
+              { headers: { "User-Agent": "Mozilla/5.0", Referer: "https://flipp.com/", Accept: "application/json" } }
+            );
+            if (!res.ok) return;
+            const data = await res.json();
+            const item = data.item ?? data;
+            if (item.sale_story) c.dealText = item.sale_story;
+            if (item.current_price && !c.couponPrice) c.couponPrice = parseFloat(item.current_price) || undefined;
+          } catch { /* skip */ }
+        })
+    );
+
     // Look up exact store branch addresses via Nominatim if coordinates available
     if (!isNaN(lat) && !isNaN(lng)) {
       const storeNames = [...new Set(coupons.map((c) => c.store))];

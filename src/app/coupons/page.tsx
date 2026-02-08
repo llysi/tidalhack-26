@@ -131,6 +131,10 @@ export default function CouponsPage() {
                 <span className="text-sm font-semibold text-green-600 dark:text-green-400">
                   ${coupon.couponPrice.toFixed(2)}
                 </span>
+              ) : coupon.dealText ? (
+                <span className="text-xs font-medium text-orange-500 dark:text-orange-400">
+                  {coupon.dealText}
+                </span>
               ) : (
                 <span className="text-xs text-zinc-400">see store</span>
               )}
