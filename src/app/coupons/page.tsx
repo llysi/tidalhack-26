@@ -165,12 +165,19 @@ export default function CouponsPage() {
                   <span className="text-zinc-400 ml-1 text-xs">({coupon.unit})</span>
                 )}
               </p>
-              {(coupon.storeName || coupon.storeAddress) && (
-                <p className="text-xs text-zinc-400 truncate mt-0.5">
-                  {coupon.storeName}
-                  {coupon.storeAddress && ` · ${coupon.storeAddress}`}
-                </p>
-              )}
+              <div className="flex items-center gap-2 mt-0.5">
+                {coupon.category && (
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 capitalize">
+                    {coupon.category}
+                  </span>
+                )}
+                {(coupon.storeName || coupon.storeAddress) && (
+                  <p className="text-xs text-zinc-400 truncate">
+                    {coupon.storeName}
+                    {coupon.storeAddress && ` · ${coupon.storeAddress}`}
+                  </p>
+                )}
+              </div>
             </div>
             <div className="text-right shrink-0">
               {coupon.regularPrice != null && (

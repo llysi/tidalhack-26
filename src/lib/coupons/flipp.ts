@@ -58,102 +58,127 @@ const NON_FOOD_KEYWORDS = [
   "lightbulb", "light bulb", "extension cord", "storage bin",
 ];
 
-// Allowlist: if a name matches any food keyword, it's definitely food
-// (overrides false positives from the blocklist)
-const FOOD_KEYWORDS = [
-  // Fruit
-  "apple", "banana", "orange", "grape", "berry", "strawberry", "blueberry",
-  "raspberry", "blackberry", "cranberry", "peach", "plum", "pear", "melon",
-  "watermelon", "cantaloupe", "honeydew", "cherry", "mango", "pineapple",
-  "kiwi", "grapefruit", "lime", "lemon", "nectarine", "apricot", "fig",
-  "date", "papaya", "guava", "pomegranate", "persimmon", "lychee",
-  "clementine", "tangerine", "mandarin", "passion fruit", "dragon fruit",
-  "jackfruit", "plantain", "coconut",
-  // Vegetables
-  "tomato", "potato", "onion", "garlic", "pepper", "broccoli", "spinach",
-  "lettuce", "carrot", "celery", "corn", "mushroom", "squash", "zucchini",
-  "cucumber", "avocado", "asparagus", "cauliflower", "cabbage", "kale",
-  "arugula", "chard", "eggplant", "beet", "radish", "turnip", "sweet potato",
-  "yam", "leek", "artichoke", "fennel", "parsnip", "rutabaga", "kohlrabi",
-  "jicama", "tomatillo", "jalapeno", "habanero", "serrano", "poblano",
-  "romaine", "bok choy", "endive", "scallion", "green onion", "shallot",
-  "ginger", "turmeric", "edamame", "okra", "collard", "brussels sprout",
-  "snap pea", "snow pea", "green bean", "wax bean",
-  // Herbs & spices
-  "cilantro", "parsley", "basil", "mint", "thyme", "rosemary", "sage",
-  "dill", "chive", "oregano", "cumin", "coriander", "paprika", "cinnamon",
-  "nutmeg", "chili powder", "curry", "turmeric", "bay leaf", "vanilla",
-  // Meat
-  "chicken", "beef", "pork", "turkey", "lamb", "veal", "bison", "venison",
-  "duck", "goose", "rabbit", "elk", "steak", "roast", "ground beef",
-  "ground turkey", "ground pork", "ground chicken", "sausage", "bacon",
-  "ham", "hot dog", "bratwurst", "deli meat", "rotisserie", "wing",
-  "drumstick", "thigh", "breast", "rib", "chop", "tenderloin", "filet",
-  "loin", "brisket", "chuck", "sirloin", "ribeye", "flank", "short rib",
-  "pulled pork", "meatball", "burger", "patty", "jerky", "pepperoni",
-  "salami", "prosciutto", "chorizo", "kielbasa",
-  // Seafood
-  "fish", "salmon", "tuna", "tilapia", "cod", "shrimp", "crab", "lobster",
-  "sardine", "anchovy", "clam", "oyster", "scallop", "mussel", "squid",
-  "mahi", "snapper", "halibut", "bass", "trout", "catfish", "flounder",
-  "sole", "crawfish", "crayfish", "octopus",
-  // Dairy / eggs
-  "milk", "cheese", "yogurt", "butter", "cream", "egg", "sour cream",
-  "cottage cheese", "cream cheese", "whipped cream", "half and half",
-  "kefir", "ricotta", "brie", "cheddar", "gouda", "mozzarella", "parmesan",
-  "feta", "provolone", "swiss", "colby", "monterey jack", "goat cheese",
-  "blue cheese", "string cheese", "creamer",
-  // Bakery / bread
-  "bread", "roll", "bun", "muffin", "cake", "cookie", "donut", "bagel",
-  "tortilla", "croissant", "biscuit", "pastry", "pie", "waffle", "pancake",
-  "sourdough", "focaccia", "ciabatta", "pita", "naan", "flatbread", "brioche",
-  "tart", "scone", "danish", "cinnamon roll", "pound cake", "brownie",
-  "cheesecake",
-  // Frozen
-  "ice cream", "frozen pizza", "frozen meal", "frozen vegetable", "frozen fruit",
-  "frozen dinner", "frozen breakfast", "frozen waffle", "frozen pancake",
-  "popsicle", "gelato", "sorbet", "frozen entree",
-  // Grains / pantry starches
-  "rice", "pasta", "noodle", "quinoa", "couscous", "barley", "farro",
-  "bulgur", "millet", "oat", "grits", "polenta", "cornmeal", "breadcrumb",
-  "panko",
-  // Baking
-  "flour", "sugar", "yeast", "baking soda", "baking powder", "cocoa",
-  // Pantry
-  "soup", "sauce", "oil", "vinegar", "seasoning", "cereal", "oatmeal",
-  "granola", "cracker", "chip", "snack", "popcorn", "pretzel", "nut",
-  "peanut", "almond", "walnut", "cashew", "pecan", "pistachio", "bean",
-  "lentil", "chickpea", "canned", "condiment", "ketchup", "mustard", "mayo",
-  "salad dressing", "syrup", "honey", "jam", "jelly", "peanut butter",
-  "almond butter", "hummus", "salsa", "guacamole", "dip", "pickle", "relish",
-  "olive", "capers", "broth", "stock", "gravy", "soy sauce", "teriyaki",
-  "sriracha", "hot sauce", "bbq sauce", "buffalo sauce", "marinara", "pesto",
-  "alfredo", "ranch", "caesar", "balsamic", "tahini", "miso", "kimchi",
-  "sauerkraut", "tomato paste", "tomato sauce",
-  // Beverages
-  "coffee", "tea", "juice", "soda", "water", "drink", "beverage",
-  "sports drink", "energy drink", "almond milk", "oat milk", "soy milk",
-  "coconut milk", "rice milk", "cashew milk", "lemonade", "sparkling water",
-  "coconut water", "kombucha", "smoothie", "cider",
-  // Deli / prepared
-  "deli", "sandwich", "wrap", "rotisserie", "burrito", "taco", "quesadilla",
-  "pizza", "lasagna", "casserole", "stew", "chili", "stir fry", "fried rice",
-  "dumpling", "spring roll", "egg roll", "sushi",
-  // Snacks / sweets
-  "chocolate", "candy", "gummy", "licorice", "marshmallow", "caramel",
-  "trail mix", "dried fruit", "raisin", "protein bar", "granola bar",
-  "energy bar", "rice cake", "beef jerky", "pudding", "applesauce",
-  "fruit cup", "fruit snack", "fudge",
-  // International / specialty
-  "tofu", "tempeh", "seaweed", "mochi", "instant noodle", "ramen",
-  "udon", "soba", "vermicelli", "falafel", "pita chip", "tortilla chip",
-  "nacho", "salsa verde",
-];
+// Allowlist: categorized food keywords — first match wins for classification
+const FOOD_CATEGORIES: Record<string, string[]> = {
+  produce: [
+    // Fruit
+    "apple", "banana", "orange", "grape", "berry", "strawberry", "blueberry",
+    "raspberry", "blackberry", "cranberry", "peach", "plum", "pear", "melon",
+    "watermelon", "cantaloupe", "honeydew", "cherry", "mango", "pineapple",
+    "kiwi", "grapefruit", "lime", "lemon", "nectarine", "apricot", "fig",
+    "date", "papaya", "guava", "pomegranate", "persimmon", "lychee",
+    "clementine", "tangerine", "mandarin", "passion fruit", "dragon fruit",
+    "jackfruit", "plantain", "coconut",
+    // Vegetables
+    "tomato", "potato", "onion", "garlic", "pepper", "broccoli", "spinach",
+    "lettuce", "carrot", "celery", "corn", "mushroom", "squash", "zucchini",
+    "cucumber", "avocado", "asparagus", "cauliflower", "cabbage", "kale",
+    "arugula", "chard", "eggplant", "beet", "radish", "turnip", "sweet potato",
+    "yam", "leek", "artichoke", "fennel", "parsnip", "rutabaga", "kohlrabi",
+    "jicama", "tomatillo", "jalapeno", "habanero", "serrano", "poblano",
+    "romaine", "bok choy", "endive", "scallion", "green onion", "shallot",
+    "ginger", "edamame", "okra", "collard", "brussels sprout",
+    "snap pea", "snow pea", "green bean", "wax bean",
+  ],
+  herbs: [
+    "cilantro", "parsley", "basil", "mint", "thyme", "rosemary", "sage",
+    "dill", "chive", "oregano", "cumin", "coriander", "paprika", "cinnamon",
+    "nutmeg", "chili powder", "curry", "turmeric", "bay leaf", "vanilla",
+  ],
+  meat: [
+    "chicken", "beef", "pork", "turkey", "lamb", "veal", "bison", "venison",
+    "duck", "goose", "rabbit", "elk", "steak", "roast", "ground beef",
+    "ground turkey", "ground pork", "ground chicken", "sausage", "bacon",
+    "ham", "hot dog", "bratwurst", "deli meat", "rotisserie", "wing",
+    "drumstick", "thigh", "breast", "rib", "chop", "tenderloin", "filet",
+    "loin", "brisket", "chuck", "sirloin", "ribeye", "flank", "short rib",
+    "pulled pork", "meatball", "burger", "patty", "jerky", "pepperoni",
+    "salami", "prosciutto", "chorizo", "kielbasa",
+  ],
+  seafood: [
+    "fish", "salmon", "tuna", "tilapia", "cod", "shrimp", "crab", "lobster",
+    "sardine", "anchovy", "clam", "oyster", "scallop", "mussel", "squid",
+    "mahi", "snapper", "halibut", "bass", "trout", "catfish", "flounder",
+    "sole", "crawfish", "crayfish", "octopus",
+  ],
+  dairy: [
+    "milk", "cheese", "yogurt", "butter", "cream", "egg", "sour cream",
+    "cottage cheese", "cream cheese", "whipped cream", "half and half",
+    "kefir", "ricotta", "brie", "cheddar", "gouda", "mozzarella", "parmesan",
+    "feta", "provolone", "swiss", "colby", "monterey jack", "goat cheese",
+    "blue cheese", "string cheese", "creamer",
+  ],
+  bakery: [
+    "bread", "roll", "bun", "muffin", "cake", "cookie", "donut", "bagel",
+    "tortilla", "croissant", "biscuit", "pastry", "pie", "waffle", "pancake",
+    "sourdough", "focaccia", "ciabatta", "pita", "naan", "flatbread", "brioche",
+    "tart", "scone", "danish", "cinnamon roll", "pound cake", "brownie",
+    "cheesecake",
+  ],
+  frozen: [
+    "ice cream", "frozen pizza", "frozen meal", "frozen vegetable", "frozen fruit",
+    "frozen dinner", "frozen breakfast", "frozen waffle", "frozen pancake",
+    "popsicle", "gelato", "sorbet", "frozen entree",
+  ],
+  grains: [
+    "rice", "pasta", "noodle", "quinoa", "couscous", "barley", "farro",
+    "bulgur", "millet", "oat", "grits", "polenta", "cornmeal", "breadcrumb",
+    "panko",
+  ],
+  baking: [
+    "flour", "sugar", "yeast", "baking soda", "baking powder", "cocoa",
+  ],
+  pantry: [
+    "soup", "sauce", "oil", "vinegar", "seasoning", "cereal", "oatmeal",
+    "granola", "cracker", "chip", "snack", "popcorn", "pretzel", "nut",
+    "peanut", "almond", "walnut", "cashew", "pecan", "pistachio", "bean",
+    "lentil", "chickpea", "canned", "condiment", "ketchup", "mustard", "mayo",
+    "salad dressing", "syrup", "honey", "jam", "jelly", "peanut butter",
+    "almond butter", "hummus", "salsa", "guacamole", "dip", "pickle", "relish",
+    "olive", "capers", "broth", "stock", "gravy", "soy sauce", "teriyaki",
+    "sriracha", "hot sauce", "bbq sauce", "buffalo sauce", "marinara", "pesto",
+    "alfredo", "ranch", "caesar", "balsamic", "tahini", "miso", "kimchi",
+    "sauerkraut", "tomato paste", "tomato sauce",
+  ],
+  beverages: [
+    "coffee", "tea", "juice", "soda", "water", "drink", "beverage",
+    "sports drink", "energy drink", "almond milk", "oat milk", "soy milk",
+    "coconut milk", "rice milk", "cashew milk", "lemonade", "sparkling water",
+    "coconut water", "kombucha", "smoothie", "cider",
+  ],
+  prepared: [
+    "deli", "sandwich", "wrap", "rotisserie", "burrito", "taco", "quesadilla",
+    "pizza", "lasagna", "casserole", "stew", "chili", "stir fry", "fried rice",
+    "dumpling", "spring roll", "egg roll", "sushi",
+  ],
+  snacks: [
+    "chocolate", "candy", "gummy", "licorice", "marshmallow", "caramel",
+    "trail mix", "dried fruit", "raisin", "protein bar", "granola bar",
+    "energy bar", "rice cake", "beef jerky", "pudding", "applesauce",
+    "fruit cup", "fruit snack", "fudge",
+  ],
+  specialty: [
+    "tofu", "tempeh", "seaweed", "mochi", "instant noodle", "ramen",
+    "udon", "soba", "vermicelli", "falafel", "pita chip", "tortilla chip",
+    "nacho", "salsa verde",
+  ],
+};
+
+// Flat list for allowlist check (all keywords across all categories)
+const ALL_FOOD_KEYWORDS = Object.values(FOOD_CATEGORIES).flat();
+
+function classifyFood(name: string): string | undefined {
+  const lower = name.toLowerCase();
+  for (const [category, keywords] of Object.entries(FOOD_CATEGORIES)) {
+    if (keywords.some((kw) => lower.includes(kw))) return category;
+  }
+  return undefined;
+}
 
 function isFoodItem(name: string): boolean {
   const lower = name.toLowerCase();
   // Allowlist overrides blocklist
-  if (FOOD_KEYWORDS.some((kw) => lower.includes(kw))) return true;
+  if (ALL_FOOD_KEYWORDS.some((kw) => lower.includes(kw))) return true;
   return !NON_FOOD_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
@@ -186,6 +211,7 @@ function parseItem(i: Record<string, unknown>, fallbackMerchant = ""): Coupon | 
     store: merchant,
     itemId: i.id as number | undefined,
     item: name,
+    category: classifyFood(name),
     regularPrice: regular,
     couponPrice: salePrice,
     savings: regular != null && salePrice != null ? Math.max(0, regular - salePrice) : undefined,
@@ -214,6 +240,7 @@ async function fetchFlyerItems(flyerId: number, merchantName: string): Promise<C
         store: merchantName,
         itemId: i.id as number | undefined,
         item: name,
+        category: classifyFood(name),
         couponPrice: salePrice,
         expires: i.valid_to as string | undefined,
         imageUrl: (i.cutout_image_url as string | undefined) || undefined,
