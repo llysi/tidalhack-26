@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 
@@ -22,53 +22,26 @@ export default function Chat({ phase }: ChatProps) {
     }
   });
 
-  useEffect(() => {
-    try {
-      // Clear client storage so the app always starts fresh on each visit
-      localStorage.clear();
-      sessionStorage.clear();
-    } catch (e) {
-      // ignore storage errors (e.g., SSR or blocked storage)
-    }
-  }, []);
 
 
   const [coords, setCoords] = useState<{lat: number, lng: number} | null>(null);
 const [locError, setLocError] = useState<string>("");
 
 
-const handleGetLocation = () => {
-  if (!navigator.geolocation) {
-    setLocError("Geolocation is not supported by your browser.");
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      setCoords({
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      });
-      console.log("Location captured:", position.coords.latitude, position.coords.longitude);
-    },
-    (error) => {
-      setLocError("Location access denied. Please enter your zip code manually.");
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      setLocError("Geolocation is not supported by your browser.");
+      return;
     }
-  );
-};
-
-<div className="flex flex-col gap-2">
-  <button 
-    onClick={handleGetLocation}
-    className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
-  >
-    📍 Use My Current Location
-  </button>
-  
-  {coords && <p className="text-green-500 text-sm">Location set!</p>}
-  {locError && <p className="text-red-500 text-sm">{locError}</p>}
-</div>
-
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
+      },
+      () => {
+        setLocError("Location access denied. Please enter your zip code manually.");
+      }
+    );
+  };
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
@@ -98,6 +71,18 @@ const handleGetLocation = () => {
 
   return (
     <div className="flex h-full flex-col">
+      {/* Location */}
+      <div className="flex flex-col gap-1 px-4 pt-3">
+        <button
+          onClick={handleGetLocation}
+          className="self-start bg-blue-500 text-white px-3 py-1.5 rounded-full text-sm hover:bg-blue-600 transition"
+        >
+          Use My Current Location
+        </button>
+        {coords && <p className="text-green-600 text-xs">Location set!</p>}
+        {locError && <p className="text-red-500 text-xs">{locError}</p>}
+      </div>
+
       {/* Message list */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
@@ -110,7 +95,8 @@ const handleGetLocation = () => {
 
         {messages.map((message) => {
           const text = getMessageText(message);
-          if (!text) return null;
+          if (!text && message.role !== "assistant") return null;
+          const displayText = text || "Searching...";
 
           return (
             <div
@@ -127,7 +113,7 @@ const handleGetLocation = () => {
                 }`}
               >
                 {/* TODO: Render markdown or rich content if needed */}
-                <p className="whitespace-pre-wrap">{text}</p>
+                <p className="whitespace-pre-wrap">{displayText}</p>
               </div>
             </div>
           );
