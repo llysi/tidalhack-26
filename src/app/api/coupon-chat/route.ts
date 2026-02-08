@@ -1,4 +1,4 @@
-import { streamText } from "ai";
+import { streamText, convertToModelMessages } from "ai";
 import { z } from "zod/v4";
 import { defaultModel } from "@/lib/featherless";
 import type { Coupon } from "@/lib/coupons/types";
@@ -67,7 +67,10 @@ export async function POST(req: Request) {
       ? `CURRENT BASKET (${basketItems.length} items, ~$${basketTotal.toFixed(2)}):\n${basketItems.map((c: Coupon) => `  • ${c.item} $${(c.couponPrice ?? 0).toFixed(2)} [${c.category ?? "?"}]`).join("\n")}`
       : "CURRENT BASKET:\n  (empty — user hasn't added anything yet)";
 
-    const systemPrompt = `You are ADI-I, a warm and knowledgeable grocery shopping assistant. You help users build balanced, budget-friendly grocery baskets from their local weekly deals.
+    const hasDeals = list.length > 0;
+
+    const systemPrompt = `You are ADI-I, a warm and knowledgeable grocery shopping assistant. You help users find food resources, plan meals on a budget, and discover local grocery deals.
+${!hasDeals ? `\nNo deals are loaded yet (the user likely hasn't set their location). Introduce yourself warmly, then ask for their profile info (people, budget, car) naturally. After collecting their profile, suggest they set their location in the top navigation bar to unlock local deals and the AI basket feature.` : ""}
 
 ═══════════════════════════════
 ${profileContext}
@@ -115,7 +118,7 @@ BUDGET MATH RULES (follow strictly):
     const result = streamText({
       model: defaultModel,
       system: systemPrompt,
-      messages,
+      messages: await convertToModelMessages(messages),
       tools: {
         saveProfile: {
           description: "Save the user's profile: household size, weekly budget, and whether they have a car",
@@ -124,6 +127,7 @@ BUDGET MATH RULES (follow strictly):
             budget: z.string().optional().describe("Weekly grocery budget, e.g. '$80'"),
             car: z.string().optional().describe("Whether they have a car: 'yes' or 'no'"),
           }),
+          execute: async () => ({ saved: true }),
         },
         suggestBasket: {
           description: "Present a curated basket of grocery items for the user to add",
@@ -136,6 +140,7 @@ BUDGET MATH RULES (follow strictly):
             })).describe("5-10 suggested items"),
             summary: z.string().describe("1-2 sentence overview of the suggested basket"),
           }),
+          execute: async () => ({ displayed: true }),
         },
       },
     });
