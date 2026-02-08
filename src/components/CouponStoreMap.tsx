@@ -6,12 +6,21 @@ import type { SnapRetailer } from "@/lib/usda-snap";
 interface Props {
   stores: SnapRetailer[];
   activeStore?: string;
+  // NEW: Added center prop to the interface
+  center?: { lat: number; lng: number } | null;
   onSelectStore?: (name: string) => void;
   userLat?: number;
   userLng?: number;
 }
 
-export default function CouponStoreMap({ stores, activeStore, onSelectStore, userLat, userLng }: Props) {
+export default function CouponStoreMap({ 
+  stores, 
+  activeStore, 
+  center, // NEW: Destructure center
+  onSelectStore, 
+  userLat, 
+  userLng 
+}: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const leafletMap = useRef<any>(null);
@@ -23,10 +32,7 @@ export default function CouponStoreMap({ stores, activeStore, onSelectStore, use
       leafletMap.current = null;
     }
 
-    // Dynamically import leaflet (client-only)
     import("leaflet").then((L) => {
-      // Fix default marker icons for Next.js
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -44,7 +50,6 @@ export default function CouponStoreMap({ stores, activeStore, onSelectStore, use
         attribution: "© OpenStreetMap contributors",
       }).addTo(map);
 
-      // User location marker
       if (userLat && userLng) {
         const userIcon = L.divIcon({
           html: '<div style="width:12px;height:12px;border-radius:50%;background:#074a30;border:2px solid white;box-shadow:0 0 4px rgba(0,0,0,0.4)"></div>',
@@ -55,7 +60,6 @@ export default function CouponStoreMap({ stores, activeStore, onSelectStore, use
         L.marker([userLat, userLng], { icon: userIcon }).addTo(map).bindPopup("You");
       }
 
-      // Store markers
       stores.forEach((s) => {
         if (!s.lat || !s.lng) return;
         const marker = L.marker([s.lat, s.lng])
@@ -73,10 +77,19 @@ export default function CouponStoreMap({ stores, activeStore, onSelectStore, use
         leafletMap.current = null;
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stores, userLat, userLng]);
 
-  // Highlight active store marker when activeStore changes
+  // NEW: Effect to pan/fly when center prop changes
+  useEffect(() => {
+    if (!leafletMap.current || !center) return;
+    
+    // flyTo provides a smooth zoom-out/zoom-in animation to the new point
+    leafletMap.current.flyTo([center.lat, center.lng], 15, {
+      duration: 1.5,
+      easeLinearity: 0.25
+    });
+  }, [center]);
+
   useEffect(() => {
     if (!leafletMap.current || !activeStore) return;
     import("leaflet").then((L) => {
@@ -84,31 +97,26 @@ export default function CouponStoreMap({ stores, activeStore, onSelectStore, use
         s.name.toLowerCase().includes(activeStore.toLowerCase().split(" ")[0])
       );
       if (store?.lat && store?.lng) {
+        // Use setView for the regular tab switching to keep it snappy
         leafletMap.current.setView([store.lat, store.lng], 15, { animate: true });
-        // Open popup for the matched marker
-        leafletMap.current.eachLayer((layer: unknown) => {
-          const l = layer as { getLatLng?: () => { lat: number; lng: number }; openPopup?: () => void };
-          if (l.getLatLng && l.openPopup) {
-            const pos = l.getLatLng!();
+        
+        leafletMap.current.eachLayer((layer: any) => {
+          if (layer.getLatLng && layer.openPopup) {
+            const pos = layer.getLatLng();
             if (Math.abs(pos.lat - store.lat) < 0.0001 && Math.abs(pos.lng - store.lng) < 0.0001) {
-              l.openPopup!();
+              layer.openPopup();
             }
           }
         });
       }
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeStore]);
+  }, [activeStore, stores]);
 
   if (stores.length === 0) return null;
 
   return (
     <>
-      {/* Leaflet CSS */}
-      <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      />
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
       <div ref={mapRef} className="w-full h-full rounded-xl" />
     </>
   );

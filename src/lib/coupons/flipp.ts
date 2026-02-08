@@ -198,6 +198,7 @@ function isSnapStore(name: string): boolean {
   return SNAP_STORES.some((s) => lower.includes(s));
 }
 
+
 // Categories that are SNAP/EBT eligible (excludes hot prepared foods, alcohol, etc.)
 const SNAP_ELIGIBLE_CATEGORIES = new Set([
   "produce", "meat", "seafood", "dairy", "bakery", "frozen",
@@ -208,6 +209,16 @@ function isSnapEligibleItem(category: string | undefined): boolean {
   if (!category) return false;
   return SNAP_ELIGIBLE_CATEGORIES.has(category);
 }
+
+// Expanded Ineligible Keywords (Hot food, Alcohol, etc.)
+const SNAP_EXCLUDED_KEYWORDS = [
+  "hot", "roasted", "rotisserie", "prepared", "cooked", "ready to eat",
+  "beer", "wine", "liquor", "spirits", "alcohol", "hard seltzer",
+  "tobacco", "cigarette", "cigar", "nicotine", "vape",
+  "pharmacy", "rx", "prescription", "pet", "dog", "cat", // SNAP is for humans only
+];
+
+
 
 // Keywords that identify grocery / food stores (case-insensitive)
 const GROCERY_KEYWORDS = [
@@ -224,20 +235,25 @@ function isGroceryStore(name: string): boolean {
   return GROCERY_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
+
 function parseItem(i: Record<string, unknown>, fallbackMerchant = ""): Coupon | null {
   const merchant = ((i.merchant_name ?? i.store_name ?? fallbackMerchant) as string).trim();
   if (!merchant || !isGroceryStore(merchant)) return null;
 
   const name = (i.name ?? i.description) as string | undefined;
-  if (!name || !isFoodItem(name)) return null;
+  // Ensure name exists and is food
+  if (!name || name.trim() === "" || !isFoodItem(name)) return null;
 
   const salePrice = (i.current_price ?? i.sale_price ?? i.price) as number | undefined;
   const regular = (i.pre_price ?? i.original_price ?? i.regular_price) as number | undefined;
 
+  // NEW: Ensure a price exists
+  if (salePrice === undefined || salePrice === null) return null;
+
   return {
     store: merchant,
     itemId: i.id as number | undefined,
-    item: name,
+    item: name.trim(),
     category: classifyFood(name),
     snapEligible: isSnapStore(merchant) && isSnapEligibleItem(classifyFood(name)),
     regularPrice: regular,
@@ -257,17 +273,23 @@ async function fetchFlyerItems(flyerId: number, merchantName: string): Promise<C
     if (!res.ok) return [];
     const data = await res.json();
     const items: unknown[] = data?.items ?? [];
+    
     return items.flatMap((item) => {
       const i = item as Record<string, unknown>;
       const name = (i.name ?? i.short_name) as string | undefined;
-      if (!name || !isFoodItem(name)) return [];
+      
       // price is a string like "9.97" or empty
       const priceStr = i.price as string | undefined;
       const salePrice = priceStr ? parseFloat(priceStr) || undefined : undefined;
+
+      // NEW: Filter out if name is missing OR price is missing
+      if (!name || name.trim() === "" || !isFoodItem(name)) return [];
+      if (salePrice === undefined || salePrice === null) return [];
+
       const coupon: Coupon = {
         store: merchantName,
         itemId: i.id as number | undefined,
-        item: name,
+        item: name.trim(),
         category: classifyFood(name),
         snapEligible: isSnapStore(merchantName) && isSnapEligibleItem(classifyFood(name)),
         couponPrice: salePrice,
